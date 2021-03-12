@@ -85,12 +85,12 @@ RSpec.describe Ears do
     end
 
     it 'binds a queue to an exchange' do
-      expect(queue).to receive(:bind).with(exchange)
+      expect(queue).to receive(:bind).with(exchange, routing_key: 'test')
 
       Ears.setup do
         exchange = exchange('my-exchange', :topic)
         queue = queue('my-queue')
-        queue.bind(exchange)
+        queue.bind(exchange, routing_key: 'test')
       end
     end
 
