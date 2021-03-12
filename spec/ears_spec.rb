@@ -1,3 +1,5 @@
+require 'ears'
+
 RSpec.describe Ears do
   let(:bunny) { instance_double(Bunny::Session) }
   let(:channel) { instance_double(Bunny::Channel) }
