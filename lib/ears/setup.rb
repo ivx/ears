@@ -15,7 +15,7 @@ module Ears
       consumer.on_delivery do |delivery_info, metadata, payload|
         consumer.work(delivery_info, metadata, payload)
       end
-      queue.subscribe_with(consumer)
+      Thread.new { queue.subscribe_with(consumer, block: true) }
     end
   end
 end

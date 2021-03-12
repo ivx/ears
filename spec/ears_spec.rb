@@ -50,7 +50,15 @@ RSpec.describe Ears do
       allow(Bunny::Exchange).to receive(:new).and_return(exchange)
       allow(Bunny::Queue).to receive(:new).and_return(queue)
       allow(queue).to receive(:bind)
+      allow(queue).to receive(:subscribe_with)
       allow(consumer_class).to receive(:new).and_return(consumer_instance)
+      allow(consumer_instance).to receive(:on_delivery).and_yield(
+        delivery_info,
+        metadata,
+        payload,
+      )
+      allow(consumer_instance).to receive(:work)
+      allow(Thread).to receive(:new).and_yield
 
       stub_const('MyConsumer', consumer_class)
     end
@@ -85,17 +93,26 @@ RSpec.describe Ears do
     end
 
     it 'starts a consumer subscribed to a queue' do
-      expect(consumer_instance).to receive(:on_delivery).and_yield(
-        delivery_info,
-        metadata,
-        payload,
-      )
-      expect(consumer_instance).to receive(:work).with(
-        delivery_info,
-        metadata,
-        payload,
-      )
-      expect(queue).to receive(:subscribe_with).with(consumer_instance)
+      expect(consumer_instance).to receive(:on_delivery)
+        .and_yield(delivery_info, metadata, payload)
+        .ordered
+      expect(consumer_instance).to receive(:work)
+        .with(delivery_info, metadata, payload)
+        .ordered
+      expect(queue).to receive(:subscribe_with)
+        .with(consumer_instance, block: true)
+        .ordered
+
+      Ears.setup do
+        exchange = exchange('my-exchange', :topic)
+        queue = queue('my-queue')
+        queue.bind(exchange, routing_key: 'test')
+        consumer(queue, MyConsumer)
+      end
+    end
+
+    it 'starts the consumer on a dedicated thread' do
+      expect(Thread).to receive(:new).and_yield
 
       Ears.setup do
         exchange = exchange('my-exchange', :topic)
