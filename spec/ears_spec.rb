@@ -42,6 +42,9 @@ RSpec.describe Ears do
       end
     end
     let(:consumer_instance) { instance_double(consumer_class) }
+    let(:delivery_info) { instance_double(Bunny::DeliveryInfo) }
+    let(:metadata) { instance_double(Bunny::MessageProperties) }
+    let(:payload) { 'my payload' }
 
     before do
       allow(Bunny::Exchange).to receive(:new).and_return(exchange)
@@ -83,14 +86,14 @@ RSpec.describe Ears do
 
     it 'starts a consumer subscribed to a queue' do
       expect(consumer_instance).to receive(:on_delivery).and_yield(
-        :info,
-        :metadata,
-        :payload,
+        delivery_info,
+        metadata,
+        payload,
       )
       expect(consumer_instance).to receive(:work).with(
-        :info,
-        :metadata,
-        :payload,
+        delivery_info,
+        metadata,
+        payload,
       )
       expect(queue).to receive(:subscribe_with).with(consumer_instance)
 
