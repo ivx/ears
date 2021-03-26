@@ -39,7 +39,7 @@ RSpec.describe Ears do
     let(:exchange) { instance_double(Bunny::Exchange) }
     let(:queue) { instance_double(Bunny::Queue) }
     let(:consumer_class) do
-      Class.new(Bunny::Consumer) do
+      Class.new(Ears::Consumer) do
         def work(delivery_info, metadata, payload); end
       end
     end
@@ -53,6 +53,7 @@ RSpec.describe Ears do
       allow(Bunny::Queue).to receive(:new).and_return(queue)
       allow(queue).to receive(:bind)
       allow(queue).to receive(:subscribe_with)
+      allow(queue).to receive(:channel).and_return(channel)
       allow(consumer_class).to receive(:new).and_return(consumer_instance)
       allow(consumer_instance).to receive(:on_delivery).and_yield(
         delivery_info,
@@ -101,20 +102,7 @@ RSpec.describe Ears do
       expect(consumer_instance).to receive(:work)
         .with(delivery_info, metadata, payload)
         .ordered
-      expect(queue).to receive(:subscribe_with)
-        .with(consumer_instance, block: true)
-        .ordered
-
-      Ears.setup do
-        exchange = exchange('my-exchange', :topic)
-        queue = queue('my-queue')
-        queue.bind(exchange, routing_key: 'test')
-        consumer(queue, MyConsumer)
-      end
-    end
-
-    it 'starts the consumer on a dedicated thread' do
-      expect(Thread).to receive(:new).and_yield
+      expect(queue).to receive(:subscribe_with).with(consumer_instance).ordered
 
       Ears.setup do
         exchange = exchange('my-exchange', :topic)

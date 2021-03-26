@@ -1,4 +1,5 @@
 require 'bunny'
+require 'ears/consumer'
 
 module Ears
   class Setup
@@ -10,12 +11,20 @@ module Ears
       Bunny::Queue.new(Ears.channel, name)
     end
 
-    def consumer(queue, consumer_class)
-      consumer = consumer_class.new
+    def consumer(queue, consumer_class, args = {})
+      consumer =
+        consumer_class.new(
+          queue.channel,
+          queue,
+          consumer_class.name,
+          false,
+          false,
+          args,
+        )
       consumer.on_delivery do |delivery_info, metadata, payload|
         consumer.work(delivery_info, metadata, payload)
       end
-      Thread.new { queue.subscribe_with(consumer, block: true) }
+      queue.subscribe_with(consumer)
     end
   end
 end

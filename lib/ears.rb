@@ -1,4 +1,5 @@
 require 'bunny'
+require 'ears/consumer'
 require 'ears/setup'
 require 'ears/version'
 
@@ -17,6 +18,10 @@ module Ears
 
     def setup(&block)
       Ears::Setup.new.instance_eval(&block)
+    end
+
+    def run!
+      loop { sleep 5 }
     end
 
     def reset!
