@@ -1,4 +1,4 @@
-name: Ruby
+name: Build
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: '14'
     - name: Run prettier
-      run: npx yarn lint
+      run: npm i -g yarn && yarn && yarn lint
     - name: Run Rubocop
       run: bundle exec rubocop
     - name: Run tests
