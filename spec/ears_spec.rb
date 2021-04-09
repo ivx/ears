@@ -9,6 +9,8 @@ RSpec.describe Ears do
     allow(Bunny).to receive(:new).and_return(bunny)
     allow(bunny).to receive(:start)
     allow(bunny).to receive(:create_channel).and_return(channel)
+    allow(channel).to receive(:prefetch).with(1)
+    allow(channel).to receive(:on_uncaught_exception)
   end
 
   it 'has a version number' do
@@ -25,7 +27,11 @@ RSpec.describe Ears do
 
   describe '.channel' do
     it 'creates a channel when it is accessed' do
-      expect(bunny).to receive(:create_channel).and_return(channel)
+      expect(bunny).to receive(:create_channel)
+        .with(nil, 1, true)
+        .and_return(channel)
+      expect(channel).to receive(:prefetch).with(1)
+      expect(channel).to receive(:on_uncaught_exception)
 
       Ears.channel
     end
@@ -39,7 +45,7 @@ RSpec.describe Ears do
     let(:exchange) { instance_double(Bunny::Exchange) }
     let(:queue) { instance_double(Bunny::Queue) }
     let(:consumer_class) do
-      Class.new(Bunny::Consumer) do
+      Class.new(Ears::Consumer) do
         def work(delivery_info, metadata, payload); end
       end
     end
@@ -53,6 +59,7 @@ RSpec.describe Ears do
       allow(Bunny::Queue).to receive(:new).and_return(queue)
       allow(queue).to receive(:bind)
       allow(queue).to receive(:subscribe_with)
+      allow(queue).to receive(:channel).and_return(channel)
       allow(consumer_class).to receive(:new).and_return(consumer_instance)
       allow(consumer_instance).to receive(:on_delivery).and_yield(
         delivery_info,
@@ -79,8 +86,8 @@ RSpec.describe Ears do
       expect(Bunny::Queue).to receive(:new).with(channel, 'my-queue')
 
       Ears.setup do
-        exchange = exchange('my-exchange', :topic)
-        queue = queue('my-queue')
+        exchange('my-exchange', :topic)
+        queue('my-queue')
       end
     end
 
@@ -98,23 +105,10 @@ RSpec.describe Ears do
       expect(consumer_instance).to receive(:on_delivery)
         .and_yield(delivery_info, metadata, payload)
         .ordered
-      expect(consumer_instance).to receive(:work)
+      expect(consumer_instance).to receive(:process_delivery)
         .with(delivery_info, metadata, payload)
         .ordered
-      expect(queue).to receive(:subscribe_with)
-        .with(consumer_instance, block: true)
-        .ordered
-
-      Ears.setup do
-        exchange = exchange('my-exchange', :topic)
-        queue = queue('my-queue')
-        queue.bind(exchange, routing_key: 'test')
-        consumer(queue, MyConsumer)
-      end
-    end
-
-    it 'starts the consumer on a dedicated thread' do
-      expect(Thread).to receive(:new).and_yield
+      expect(queue).to receive(:subscribe_with).with(consumer_instance).ordered
 
       Ears.setup do
         exchange = exchange('my-exchange', :topic)
