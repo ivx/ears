@@ -12,19 +12,24 @@ module Ears
     end
 
     def consumer(queue, consumer_class, args = {})
-      consumer =
-        consumer_class.new(
-          queue.channel,
-          queue,
-          consumer_class.name,
-          false,
-          false,
-          args,
-        )
+      consumer = create_consumer(queue, consumer_class, args)
       consumer.on_delivery do |delivery_info, metadata, payload|
-        consumer.work(delivery_info, metadata, payload)
+        consumer.process_delivery(delivery_info, metadata, payload)
       end
       queue.subscribe_with(consumer)
+    end
+
+    private
+
+    def create_consumer(queue, consumer_class, args)
+      consumer_class.new(
+        queue.channel,
+        queue,
+        consumer_class.name,
+        false,
+        false,
+        args,
+      )
     end
   end
 end

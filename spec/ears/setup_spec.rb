@@ -51,7 +51,7 @@ RSpec.describe Ears::Setup do
         metadata,
         payload,
       )
-      expect(consumer_instance).to receive(:work).with(
+      expect(consumer_instance).to receive(:process_delivery).with(
         delivery_info,
         metadata,
         payload,
@@ -70,7 +70,7 @@ RSpec.describe Ears::Setup do
         metadata,
         payload,
       )
-      expect(consumer_instance).to receive(:work).with(
+      expect(consumer_instance).to receive(:process_delivery).with(
         delivery_info,
         metadata,
         payload,
