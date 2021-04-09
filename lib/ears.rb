@@ -21,7 +21,10 @@ module Ears
     end
 
     def run!
-      loop { sleep 5 }
+      running = true
+      Signal.trap('INT') { running = false }
+      Signal.trap('TERM') { running = false }
+      sleep 1 while running
     end
 
     def reset!
