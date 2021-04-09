@@ -43,7 +43,7 @@ RSpec.describe Ears do
 
   describe '.setup' do
     let(:exchange) { instance_double(Bunny::Exchange) }
-    let(:queue) { instance_double(Bunny::Queue) }
+    let(:queue) { instance_double(Bunny::Queue, name: 'queue', options: {}) }
     let(:consumer_class) do
       Class.new(Ears::Consumer) do
         def work(delivery_info, metadata, payload); end
