@@ -13,7 +13,13 @@ module Ears
     end
 
     def channel
-      Thread.current[:ears_channel] ||= connection.create_channel
+      Thread.current[:ears_channel] ||=
+        connection
+          .create_channel(nil, 1, true)
+          .tap do |channel|
+            channel.prefetch(1)
+            channel.on_uncaught_exception { |error| Thread.main.raise(error) }
+          end
     end
 
     def setup(&block)

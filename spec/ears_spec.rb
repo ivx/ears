@@ -9,6 +9,8 @@ RSpec.describe Ears do
     allow(Bunny).to receive(:new).and_return(bunny)
     allow(bunny).to receive(:start)
     allow(bunny).to receive(:create_channel).and_return(channel)
+    allow(channel).to receive(:prefetch).with(1)
+    allow(channel).to receive(:on_uncaught_exception)
   end
 
   it 'has a version number' do
@@ -25,7 +27,11 @@ RSpec.describe Ears do
 
   describe '.channel' do
     it 'creates a channel when it is accessed' do
-      expect(bunny).to receive(:create_channel).and_return(channel)
+      expect(bunny).to receive(:create_channel)
+        .with(nil, 1, true)
+        .and_return(channel)
+      expect(channel).to receive(:prefetch).with(1)
+      expect(channel).to receive(:on_uncaught_exception)
 
       Ears.channel
     end
@@ -80,8 +86,8 @@ RSpec.describe Ears do
       expect(Bunny::Queue).to receive(:new).with(channel, 'my-queue')
 
       Ears.setup do
-        exchange = exchange('my-exchange', :topic)
-        queue = queue('my-queue')
+        exchange('my-exchange', :topic)
+        queue('my-queue')
       end
     end
 
@@ -99,7 +105,7 @@ RSpec.describe Ears do
       expect(consumer_instance).to receive(:on_delivery)
         .and_yield(delivery_info, metadata, payload)
         .ordered
-      expect(consumer_instance).to receive(:work)
+      expect(consumer_instance).to receive(:process_delivery)
         .with(delivery_info, metadata, payload)
         .ordered
       expect(queue).to receive(:subscribe_with).with(consumer_instance).ordered
