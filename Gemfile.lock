@@ -3,6 +3,7 @@ PATH
   specs:
     ears (0.1.0)
       bunny
+      multi_json
 
 GEM
   remote: https://rubygems.org/
@@ -12,6 +13,7 @@ GEM
     bunny (2.17.0)
       amq-protocol (~> 2.3, >= 2.3.1)
     diff-lcs (1.4.4)
+    multi_json (1.15.0)
     parallel (1.20.1)
     parser (3.0.0.0)
       ast (~> 2.4.1)
