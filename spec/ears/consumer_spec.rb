@@ -81,42 +81,103 @@ RSpec.describe Ears::Consumer do
   describe '#ack' do
     let(:instance) do
       Class.new(Ears::Consumer) do
-        def work
+        def work(_delivery_info, _metadata, _payload)
           ack
         end
       end.new(channel, queue)
     end
 
     it 'returns :ack when called in #work' do
-      expect(instance.work).to eq(:ack)
+      expect(instance.work(delivery_info, metadata, payload)).to eq(:ack)
     end
   end
 
   describe '#reject' do
     let(:instance) do
       Class.new(Ears::Consumer) do
-        def work
+        def work(_delivery_info, _metadata, _payload)
           reject
         end
       end.new(channel, queue)
     end
 
     it 'returns :reject when called in #work' do
-      expect(instance.work).to eq(:reject)
+      expect(instance.work(delivery_info, metadata, payload)).to eq(:reject)
     end
   end
 
   describe '#requeue' do
     let(:instance) do
       Class.new(Ears::Consumer) do
-        def work
+        def work(_delivery_info, _metadata, _payload)
           requeue
         end
       end.new(channel, queue)
     end
 
     it 'returns :requeue when called in #work' do
-      expect(instance.work).to eq(:requeue)
+      expect(instance.work(delivery_info, metadata, payload)).to eq(:requeue)
+    end
+  end
+
+  describe '.use' do
+    let(:instance) do
+      Class.new(Ears::Consumer) do
+        use Middleware
+
+        def work(_delivery_info, _metadata, _payload)
+          ack
+        end
+      end.new(channel, queue)
+    end
+
+    let(:instance_with_two_middlewares) do
+      Class.new(Ears::Consumer) do
+        use Middleware
+        use SecondMiddleware
+
+        def work(_delivery_info, _metadata, _payload)
+          ack
+        end
+      end.new(channel, queue)
+    end
+
+    let(:middleware) { instance_double('Middleware') }
+    let(:second_middleware) { instance_double('SecondMiddleware') }
+
+    before do
+      stub_const('Middleware', middleware)
+      stub_const('SecondMiddleware', second_middleware)
+    end
+
+    it 'wraps the given middleware around the call to work' do
+      expect(middleware).to receive(:call) do |d, m, p, app|
+        expect(d).to eq(delivery_info)
+        expect(m).to eq(metadata)
+        expect(p).to eq(payload)
+        app.call(d, m, p)
+      end
+
+      expect(instance.process_delivery(delivery_info, metadata, payload)).to eq(
+        :ack,
+      )
+    end
+
+    it 'calls middlewares in the correct order' do
+      expect(middleware).to receive(:call) do |d, m, p, app|
+        app.call(d, m, p)
+      end.ordered
+      expect(second_middleware).to receive(:call) do |d, m, p, app|
+        app.call(d, m, p)
+      end.ordered
+
+      expect(
+        instance_with_two_middlewares.process_delivery(
+          delivery_info,
+          metadata,
+          payload,
+        ),
+      ).to eq(:ack)
     end
   end
 end

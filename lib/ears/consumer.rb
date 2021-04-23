@@ -10,14 +10,24 @@ module Ears
       end
     end
 
+    def self.middlewares
+      @middlewares ||= []
+    end
+
+    def self.use(middleware)
+      middlewares << middleware
+    end
+
     def work(delivery_info, metadata, payload)
       raise NotImplementedError
     end
 
     def process_delivery(delivery_info, metadata, payload)
-      work(delivery_info, metadata, payload).tap do |result|
-        process_result(result, delivery_info.delivery_tag)
-      end
+      self.class.middlewares.reverse.reduce(
+        work_proc,
+      ) do |next_middleware, middleware|
+        nest_middleware(middleware, next_middleware)
+      end.call(delivery_info, metadata, payload)
     end
 
     protected
@@ -35,6 +45,20 @@ module Ears
     end
 
     private
+
+    def work_proc
+      ->(delivery_info, metadata, payload) do
+        work(delivery_info, metadata, payload).tap do |result|
+          process_result(result, delivery_info.delivery_tag)
+        end
+      end
+    end
+
+    def nest_middleware(middleware, next_middleware)
+      ->(delivery_info, metadata, payload) do
+        middleware.call(delivery_info, metadata, payload, next_middleware)
+      end
+    end
 
     def process_result(result, delivery_tag)
       case result
