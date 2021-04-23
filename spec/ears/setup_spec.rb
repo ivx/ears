@@ -20,20 +20,38 @@ RSpec.describe Ears::Setup do
   describe '#exchange' do
     it 'creates a new bunny exchange with the given options' do
       expect(Bunny::Exchange).to receive(:new)
-        .with(channel, :topic, 'name')
+        .with(channel, :topic, 'name', {})
         .and_return(exchange)
 
       expect(Ears::Setup.new.exchange('name', :topic)).to eq(exchange)
+    end
+
+    it 'passes the given options to the exchange' do
+      expect(Bunny::Exchange).to receive(:new)
+        .with(channel, :topic, 'name', { test: 1 })
+        .and_return(exchange)
+
+      expect(Ears::Setup.new.exchange('name', :topic, { test: 1 })).to eq(
+        exchange,
+      )
     end
   end
 
   describe '#queue' do
     it 'creates a new bunny queue with the given options' do
       expect(Bunny::Queue).to receive(:new)
-        .with(channel, 'name')
+        .with(channel, 'name', {})
         .and_return(queue)
 
       expect(Ears::Setup.new.queue('name')).to eq(queue)
+    end
+
+    it 'passes the given options to the queue' do
+      expect(Bunny::Queue).to receive(:new)
+        .with(channel, 'name', { test: 1 })
+        .and_return(queue)
+
+      expect(Ears::Setup.new.queue('name', { test: 1 })).to eq(queue)
     end
   end
 
@@ -108,6 +126,17 @@ RSpec.describe Ears::Setup do
         .times
 
       Ears::Setup.new.consumer(queue, MyConsumer, 3)
+    end
+
+    it 'passes the prefetch argument to the channel' do
+      expect(channel).to receive(:prefetch).with(5)
+
+      Ears::Setup.new.consumer(
+        queue,
+        MyConsumer,
+        1,
+        { prefetch: 5, bla: 'test' },
+      )
     end
 
     it 'numbers the consumers' do

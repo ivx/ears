@@ -77,13 +77,14 @@ RSpec.describe Ears do
         channel,
         :topic,
         'my-exchange',
+        {},
       )
 
       Ears.setup { exchange('my-exchange', :topic) }
     end
 
     it 'creates a queue' do
-      expect(Bunny::Queue).to receive(:new).with(channel, 'my-queue')
+      expect(Bunny::Queue).to receive(:new).with(channel, 'my-queue', {})
 
       Ears.setup do
         exchange('my-exchange', :topic)
