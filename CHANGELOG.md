@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 (2021-05-07)
+
+### Changes
+
+- internally, user-defined `Ears::Consumer` instances are now wrapped by `Ears::ConsumerWrapper` to make the user-defined class smaller and easier to test
+
 ## 0.3.0 (2021-05-07)
 
 ### Breaking
