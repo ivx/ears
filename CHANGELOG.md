@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 (2021-05-07)
+
+### Changes
+
+- you can now call `Ears.configure` to set a custom RabbitMQ URL to connect to
+
 ## 0.2.0 (2021-05-07)
 
 ### Breaking
