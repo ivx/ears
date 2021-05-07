@@ -142,16 +142,16 @@ RSpec.describe Ears::Consumer do
       end.new(channel, queue)
     end
 
-    let(:middleware) { instance_double('Middleware') }
-    let(:second_middleware) { instance_double('SecondMiddleware') }
-
-    before do
-      stub_const('Middleware', middleware)
-      stub_const('SecondMiddleware', second_middleware)
+    let(:middleware) { class_double('Middleware').as_stubbed_const }
+    let(:middleware_instance) { instance_double('Middleware') }
+    let(:second_middleware) do
+      class_double('SecondMiddleware').as_stubbed_const
     end
+    let(:second_middleware_instance) { instance_double('SecondMiddleware') }
 
     it 'wraps the given middleware around the call to work' do
-      expect(middleware).to receive(:call) do |d, m, p, app|
+      expect(middleware).to receive(:new).and_return(middleware_instance)
+      expect(middleware_instance).to receive(:call) do |d, m, p, app|
         expect(d).to eq(delivery_info)
         expect(m).to eq(metadata)
         expect(p).to eq(payload)
@@ -164,10 +164,16 @@ RSpec.describe Ears::Consumer do
     end
 
     it 'calls middlewares in the correct order' do
-      expect(middleware).to receive(:call) do |d, m, p, app|
+      expect(middleware).to receive(:new)
+        .and_return(middleware_instance)
+        .ordered
+      expect(second_middleware).to receive(:new)
+        .and_return(second_middleware_instance)
+        .ordered
+      expect(middleware_instance).to receive(:call) do |d, m, p, app|
         app.call(d, m, p)
       end.ordered
-      expect(second_middleware).to receive(:call) do |d, m, p, app|
+      expect(second_middleware_instance).to receive(:call) do |d, m, p, app|
         app.call(d, m, p)
       end.ordered
 

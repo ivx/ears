@@ -14,8 +14,8 @@ module Ears
       @middlewares ||= []
     end
 
-    def self.use(middleware)
-      middlewares << middleware
+    def self.use(middleware, opts = {})
+      middlewares << middleware.new(opts)
     end
 
     def work(delivery_info, metadata, payload)
