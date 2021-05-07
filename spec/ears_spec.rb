@@ -17,6 +17,16 @@ RSpec.describe Ears do
     expect(Ears::VERSION).not_to be nil
   end
 
+  it 'has a configuration' do
+    expect(Ears.configuration).to be_a(Ears::Configuration)
+  end
+
+  it 'can be configured' do
+    Ears.configure { |config| config.rabbitmq_url = 'test' }
+
+    expect(Ears.configuration.rabbitmq_url).to eq('test')
+  end
+
   describe '.connection' do
     it 'connects when it is accessed' do
       expect(bunny).to receive(:start)

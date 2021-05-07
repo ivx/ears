@@ -1,4 +1,5 @@
 require 'bunny'
+require 'ears/configuration'
 require 'ears/consumer'
 require 'ears/setup'
 require 'ears/version'
@@ -8,6 +9,14 @@ module Ears
   end
 
   class << self
+    def configuration
+      @configuration ||= Ears::Configuration.new
+    end
+
+    def configure
+      yield(configuration)
+    end
+
     def connection
       @connection ||= Bunny.new.tap { |conn| conn.start }
     end
