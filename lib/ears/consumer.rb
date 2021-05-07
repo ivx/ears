@@ -1,7 +1,7 @@
 require 'bunny'
 
 module Ears
-  class Consumer < Bunny::Consumer
+  class Consumer
     class InvalidReturnError < StandardError
       def initialize(value)
         super(
@@ -49,7 +49,7 @@ module Ears
     def work_proc
       ->(delivery_info, metadata, payload) do
         work(delivery_info, metadata, payload).tap do |result|
-          process_result(result, delivery_info.delivery_tag)
+          verify_result(result)
         end
       end
     end
@@ -60,15 +60,8 @@ module Ears
       end
     end
 
-    def process_result(result, delivery_tag)
-      case result
-      when :ack
-        channel.ack(delivery_tag, false)
-      when :reject
-        channel.reject(delivery_tag)
-      when :requeue
-        channel.reject(delivery_tag, true)
-      else
+    def verify_result(result)
+      unless %i[ack reject requeue].include?(result)
         raise InvalidReturnError, result
       end
     end

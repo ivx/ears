@@ -3,7 +3,7 @@ require 'ears/consumer'
 RSpec.describe Ears::Consumer do
   let(:channel) { instance_double(Bunny::Channel) }
   let(:queue) { instance_double(Bunny::Queue) }
-  let(:instance) { Class.new(Ears::Consumer).new(channel, queue) }
+  let(:instance) { Class.new(Ears::Consumer).new }
   let(:delivery_info) do
     instance_double(Bunny::DeliveryInfo, delivery_tag: delivery_tag)
   end
@@ -42,26 +42,20 @@ RSpec.describe Ears::Consumer do
       )
     end
 
-    it 'acks the message if #work returns :ack' do
+    it 'allows returning :ack' do
       allow(instance).to receive(:work).and_return(:ack)
 
-      expect(channel).to receive(:ack).with(delivery_tag, false)
-
       instance.process_delivery(delivery_info, metadata, payload)
     end
 
-    it 'rejects the message if #work returns :reject' do
+    it 'allows returning :reject' do
       allow(instance).to receive(:work).and_return(:reject)
 
-      expect(channel).to receive(:reject).with(delivery_tag)
-
       instance.process_delivery(delivery_info, metadata, payload)
     end
 
-    it 'requeues the message if #work returns :requeue' do
+    it 'allows returning :requeue' do
       allow(instance).to receive(:work).and_return(:requeue)
-
-      expect(channel).to receive(:reject).with(delivery_tag, true)
 
       instance.process_delivery(delivery_info, metadata, payload)
     end
@@ -84,7 +78,7 @@ RSpec.describe Ears::Consumer do
         def work(_delivery_info, _metadata, _payload)
           ack
         end
-      end.new(channel, queue)
+      end.new
     end
 
     it 'returns :ack when called in #work' do
@@ -98,7 +92,7 @@ RSpec.describe Ears::Consumer do
         def work(_delivery_info, _metadata, _payload)
           reject
         end
-      end.new(channel, queue)
+      end.new
     end
 
     it 'returns :reject when called in #work' do
@@ -112,7 +106,7 @@ RSpec.describe Ears::Consumer do
         def work(_delivery_info, _metadata, _payload)
           requeue
         end
-      end.new(channel, queue)
+      end.new
     end
 
     it 'returns :requeue when called in #work' do
@@ -128,7 +122,7 @@ RSpec.describe Ears::Consumer do
         def work(_delivery_info, _metadata, _payload)
           ack
         end
-      end.new(channel, queue)
+      end.new
     end
 
     let(:instance_with_two_middlewares) do
@@ -139,7 +133,7 @@ RSpec.describe Ears::Consumer do
         def work(_delivery_info, _metadata, _payload)
           ack
         end
-      end.new(channel, queue)
+      end.new
     end
 
     let(:middleware) { class_double('Middleware').as_stubbed_const }

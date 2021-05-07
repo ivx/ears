@@ -54,12 +54,7 @@ RSpec.describe Ears do
   describe '.setup' do
     let(:exchange) { instance_double(Bunny::Exchange) }
     let(:queue) { instance_double(Bunny::Queue, name: 'queue', options: {}) }
-    let(:consumer_class) do
-      Class.new(Ears::Consumer) do
-        def work(delivery_info, metadata, payload); end
-      end
-    end
-    let(:consumer_instance) { instance_double(consumer_class) }
+    let(:consumer_wrapper) { instance_double(Ears::ConsumerWrapper) }
     let(:delivery_info) { instance_double(Bunny::DeliveryInfo) }
     let(:metadata) { instance_double(Bunny::MessageProperties) }
     let(:payload) { 'my payload' }
@@ -70,16 +65,15 @@ RSpec.describe Ears do
       allow(queue).to receive(:bind)
       allow(queue).to receive(:subscribe_with)
       allow(queue).to receive(:channel).and_return(channel)
-      allow(consumer_class).to receive(:new).and_return(consumer_instance)
-      allow(consumer_instance).to receive(:on_delivery).and_yield(
+      allow(Ears::ConsumerWrapper).to receive(:new).and_return(consumer_wrapper)
+      allow(consumer_wrapper).to receive(:on_delivery).and_yield(
         delivery_info,
         metadata,
         payload,
       )
-      allow(consumer_instance).to receive(:work)
       allow(Thread).to receive(:new).and_yield
 
-      stub_const('MyConsumer', consumer_class)
+      stub_const('MyConsumer', Class.new(Ears::Consumer))
     end
 
     it 'creates a given exchange' do
@@ -113,13 +107,13 @@ RSpec.describe Ears do
     end
 
     it 'starts a consumer subscribed to a queue' do
-      expect(consumer_instance).to receive(:on_delivery)
+      expect(consumer_wrapper).to receive(:on_delivery)
         .and_yield(delivery_info, metadata, payload)
         .ordered
-      expect(consumer_instance).to receive(:process_delivery)
+      expect(consumer_wrapper).to receive(:process_delivery)
         .with(delivery_info, metadata, payload)
         .ordered
-      expect(queue).to receive(:subscribe_with).with(consumer_instance).ordered
+      expect(queue).to receive(:subscribe_with).with(consumer_wrapper).ordered
 
       Ears.setup do
         exchange = exchange('my-exchange', :topic)

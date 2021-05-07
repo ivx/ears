@@ -1,5 +1,6 @@
 require 'bunny'
 require 'ears/consumer'
+require 'ears/consumer_wrapper'
 
 module Ears
   class Setup
@@ -27,12 +28,11 @@ module Ears
     private
 
     def create_consumer(queue, consumer_class, args, number)
-      consumer_class.new(
+      ConsumerWrapper.new(
+        consumer_class.new,
         queue.channel,
         queue,
         "#{consumer_class.name}-#{number}",
-        false,
-        false,
         args,
       )
     end

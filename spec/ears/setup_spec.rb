@@ -58,51 +58,53 @@ RSpec.describe Ears::Setup do
   describe '#consumer' do
     let(:consumer_class) { Class.new(Ears::Consumer) }
     let(:consumer_instance) { instance_double(consumer_class) }
+    let(:consumer_wrapper) { instance_double(Ears::ConsumerWrapper) }
     let(:delivery_info) { instance_double(Bunny::DeliveryInfo) }
     let(:metadata) { instance_double(Bunny::MessageProperties) }
     let(:payload) { 'my payload' }
 
     before do
       allow(consumer_class).to receive(:new).and_return(consumer_instance)
-      allow(consumer_instance).to receive(:on_delivery)
+      allow(Ears::ConsumerWrapper).to receive(:new).and_return(consumer_wrapper)
+      allow(consumer_wrapper).to receive(:on_delivery)
       allow(queue).to receive(:subscribe_with)
       stub_const('MyConsumer', consumer_class)
     end
 
     it 'instantiates the given class and registers it as a consumer' do
-      expect(consumer_class).to receive(:new)
-        .with(channel, queue, 'MyConsumer-1', false, false, {})
-        .and_return(consumer_instance)
-      expect(consumer_instance).to receive(:on_delivery).and_yield(
+      expect(Ears::ConsumerWrapper).to receive(:new)
+        .with(consumer_instance, channel, queue, 'MyConsumer-1', {})
+        .and_return(consumer_wrapper)
+      expect(consumer_wrapper).to receive(:on_delivery).and_yield(
         delivery_info,
         metadata,
         payload,
       )
-      expect(consumer_instance).to receive(:process_delivery).with(
+      expect(consumer_wrapper).to receive(:process_delivery).with(
         delivery_info,
         metadata,
         payload,
       )
-      expect(queue).to receive(:subscribe_with).with(consumer_instance)
+      expect(queue).to receive(:subscribe_with).with(consumer_wrapper)
 
       Ears::Setup.new.consumer(queue, MyConsumer)
     end
 
     it 'passes the consumer arguments' do
-      expect(consumer_class).to receive(:new)
-        .with(channel, queue, 'MyConsumer-1', false, false, { a: 1 })
-        .and_return(consumer_instance)
-      expect(consumer_instance).to receive(:on_delivery).and_yield(
+      expect(Ears::ConsumerWrapper).to receive(:new)
+        .with(consumer_instance, channel, queue, 'MyConsumer-1', { a: 1 })
+        .and_return(consumer_wrapper)
+      expect(consumer_wrapper).to receive(:on_delivery).and_yield(
         delivery_info,
         metadata,
         payload,
       )
-      expect(consumer_instance).to receive(:process_delivery).with(
+      expect(consumer_wrapper).to receive(:process_delivery).with(
         delivery_info,
         metadata,
         payload,
       )
-      expect(queue).to receive(:subscribe_with).with(consumer_instance)
+      expect(queue).to receive(:subscribe_with).with(consumer_wrapper)
 
       Ears::Setup.new.consumer(queue, MyConsumer, 1, { a: 1 })
     end
@@ -121,7 +123,7 @@ RSpec.describe Ears::Setup do
         .exactly(3)
         .times
       expect(queue).to receive(:subscribe_with)
-        .with(consumer_instance)
+        .with(consumer_wrapper)
         .exactly(3)
         .times
 
@@ -140,12 +142,12 @@ RSpec.describe Ears::Setup do
     end
 
     it 'numbers the consumers' do
-      expect(consumer_class).to receive(:new)
-        .with(channel, queue, 'MyConsumer-1', false, false, {})
-        .and_return(consumer_instance)
-      expect(consumer_class).to receive(:new)
-        .with(channel, queue, 'MyConsumer-2', false, false, {})
-        .and_return(consumer_instance)
+      expect(Ears::ConsumerWrapper).to receive(:new)
+        .with(consumer_instance, channel, queue, 'MyConsumer-1', {})
+        .and_return(consumer_wrapper)
+      expect(Ears::ConsumerWrapper).to receive(:new)
+        .with(consumer_instance, channel, queue, 'MyConsumer-2', {})
+        .and_return(consumer_wrapper)
 
       Ears::Setup.new.consumer(queue, MyConsumer, 2)
     end
