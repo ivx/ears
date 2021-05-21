@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2 (2021-05-21)
+
+### Changes
+
+- added YARD documentation and usage instructions to README
+- introduced `Ears::Middleware` as an abstract base class for middlewares
+
 ## 0.3.1 (2021-05-07)
 
 ### Changes
