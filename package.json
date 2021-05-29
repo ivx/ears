@@ -1,5 +1,5 @@
 {
-  "name": "on-prem-importer",
+  "name": "ears",
   "private": true,
   "scripts": {
     "prettify": "prettier \"**/*.{ru,rb,yml,yaml,md,gemspec,json}\" --ignore-path=\".gitignore\"",
