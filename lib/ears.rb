@@ -36,7 +36,7 @@ module Ears
           .create_channel(nil, 1, true)
           .tap do |channel|
             channel.prefetch(1)
-            channel.on_uncaught_exception { |error| Thread.main.raise(error) }
+            channel.on_uncaught_exception { |error| Ears.error!(error) }
           end
     end
 
@@ -51,7 +51,15 @@ module Ears
       running = true
       Signal.trap('INT') { running = false }
       Signal.trap('TERM') { running = false }
-      sleep 1 while running
+      sleep 1 while running && !@uncaught_error_occurred
+    end
+
+    # Signals that an uncaught error has occurred and the process should be stopped.
+    #
+    # @param [Exception] error The unhandled error that occurred.
+    def error!(error)
+      puts(error.full_message)
+      @uncaught_error_occurred = true
     end
 
     # Used internally for testing.

@@ -62,7 +62,7 @@ module Ears
         .create_channel(nil, 1, true)
         .tap do |channel|
           channel.prefetch(args.fetch(:prefetch, 1))
-          channel.on_uncaught_exception { |error| Thread.main.raise(error) }
+          channel.on_uncaught_exception { |error| Ears.error!(error) }
         end
     end
 
