@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3 (2021-07-26)
+
+### Changes
+
+- Ears will not exit gracefully on unhandled errors anymore. You have to take care of proper flushing and cleanup yourself (see README for example).
+
 ## 0.3.3 (2021-06-07)
 
 ### Changes
