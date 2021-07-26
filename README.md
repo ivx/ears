@@ -63,6 +63,16 @@ class MyConsumer < Ears::Consumer
 end
 ```
 
+And, do not forget to run it. Be prepared that unhandled errors will be reraised. So, take care of cleanup work.
+
+```ruby
+begin
+  Ears.run!
+ensure
+  # all your cleanup work goes here...
+end
+```
+
 At the end of the `#work` method, you must always return `ack`, `reject`, or `requeue` to signal what should be done with the message.
 
 ### Middlewares

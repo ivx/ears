@@ -19,6 +19,12 @@ Gem::Specification.new do |spec|
   spec.metadata['changelog_uri'] =
     'https://github.com/ivx/ears/blob/master/CHANGELOG.md'
 
+  spec.post_install_message =
+    '
+Ears: the new version changed the exit behaviour in case of uncaught exceptions.
+You may want to have a look into the CHANGELOG!
+'
+
   spec.files =
     Dir.chdir(File.expand_path('..', __FILE__)) do
       `git ls-files -z`.split("\x0").reject do |f|
