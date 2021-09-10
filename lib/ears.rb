@@ -51,8 +51,8 @@ module Ears
       running = true
       Signal.trap('INT') { running = false }
       Signal.trap('TERM') { running = false }
-      sleep 1 while running && !@uncaught_error_occurred
-      raise @error if @uncaught_error_occurred
+      sleep 1 while running && @error.nil?
+      raise @error if @error
     end
 
     # Signals that an uncaught error has occurred and the process should be stopped.
@@ -60,7 +60,6 @@ module Ears
     # @param [Exception] error The unhandled error that occurred.
     def error!(error)
       puts(error.full_message)
-      @uncaught_error_occurred = true
       @error = error
     end
 
