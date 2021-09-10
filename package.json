@@ -3,13 +3,13 @@
   "private": true,
   "scripts": {
     "prettify": "prettier \"**/*.{ru,rb,yml,yaml,md,gemspec,json}\" --ignore-path=\".gitignore\"",
-    "lint": "yarn prettify --check",
-    "format": "yarn prettify --write"
+    "lint": "npm run prettify -- --check",
+    "format": "npm run prettify -- --write"
   },
   "devDependencies": {
-    "@invisionag/prettier-config-ivx": "^2.1.1",
-    "@prettier/plugin-ruby": "^1.5.2",
-    "prettier": "^2.2.0"
+    "@invisionag/prettier-config-ivx": "^3.0.0",
+    "@prettier/plugin-ruby": "^1.6.1",
+    "prettier": "^2.4.0"
   },
   "prettier": "@invisionag/prettier-config-ivx"
 }

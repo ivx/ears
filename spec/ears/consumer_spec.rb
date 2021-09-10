@@ -74,11 +74,13 @@ RSpec.describe Ears::Consumer do
 
   describe '#ack' do
     let(:instance) do
-      Class.new(Ears::Consumer) do
-        def work(_delivery_info, _metadata, _payload)
-          ack
+      Class
+        .new(Ears::Consumer) do
+          def work(_delivery_info, _metadata, _payload)
+            ack
+          end
         end
-      end.new
+        .new
     end
 
     it 'returns :ack when called in #work' do
@@ -88,11 +90,13 @@ RSpec.describe Ears::Consumer do
 
   describe '#reject' do
     let(:instance) do
-      Class.new(Ears::Consumer) do
-        def work(_delivery_info, _metadata, _payload)
-          reject
+      Class
+        .new(Ears::Consumer) do
+          def work(_delivery_info, _metadata, _payload)
+            reject
+          end
         end
-      end.new
+        .new
     end
 
     it 'returns :reject when called in #work' do
@@ -102,11 +106,13 @@ RSpec.describe Ears::Consumer do
 
   describe '#requeue' do
     let(:instance) do
-      Class.new(Ears::Consumer) do
-        def work(_delivery_info, _metadata, _payload)
-          requeue
+      Class
+        .new(Ears::Consumer) do
+          def work(_delivery_info, _metadata, _payload)
+            requeue
+          end
         end
-      end.new
+        .new
     end
 
     it 'returns :requeue when called in #work' do
@@ -116,24 +122,28 @@ RSpec.describe Ears::Consumer do
 
   describe '.use' do
     let(:instance) do
-      Class.new(Ears::Consumer) do
-        use Middleware
+      Class
+        .new(Ears::Consumer) do
+          use Middleware
 
-        def work(_delivery_info, _metadata, _payload)
-          ack
+          def work(_delivery_info, _metadata, _payload)
+            ack
+          end
         end
-      end.new
+        .new
     end
 
     let(:instance_with_two_middlewares) do
-      Class.new(Ears::Consumer) do
-        use Middleware
-        use SecondMiddleware
+      Class
+        .new(Ears::Consumer) do
+          use Middleware
+          use SecondMiddleware
 
-        def work(_delivery_info, _metadata, _payload)
-          ack
+          def work(_delivery_info, _metadata, _payload)
+            ack
+          end
         end
-      end.new
+        .new
     end
 
     let(:middleware) { class_double('Middleware').as_stubbed_const }

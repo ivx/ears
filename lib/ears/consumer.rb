@@ -46,11 +46,14 @@ module Ears
     # @param [String] payload The payload of the received message.
     # @raise [InvalidReturnError] if you return something other than +:ack+, +:reject+ or +:requeue+ from {#work}.
     def process_delivery(delivery_info, metadata, payload)
-      self.class.middlewares.reverse.reduce(
-        work_proc,
-      ) do |next_middleware, middleware|
-        nest_middleware(middleware, next_middleware)
-      end.call(delivery_info, metadata, payload)
+      self
+        .class
+        .middlewares
+        .reverse
+        .reduce(work_proc) do |next_middleware, middleware|
+          nest_middleware(middleware, next_middleware)
+        end
+        .call(delivery_info, metadata, payload)
     end
 
     protected
