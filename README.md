@@ -156,6 +156,48 @@ Ears.setup do
 end
 ```
 
+### Implementing a retrying queue
+
+Sometimes you want to automatically retry processing a message, in case it just failed due to temporary problems. In that case, you can set the `retry_queue` and `retry_delay` parameters when creating the queue.
+
+```ruby
+my_queue =
+  queue('my_queue', durable: true, retry_queue: true, retry_delay: 5000)
+```
+
+This will automatically create a queue named `my_queue.retry` and use the arguments `x-dead-letter-exchange` and `x-dead-letter-routing-key` to route rejected messages to it. When routed to the retry queue, messages will wait there for the number of milliseconds specified in `retry_delay`, after which they will be redelivered to the original queue.
+
+This will happen indefinitely, so if you want to bail out of this cycle at some point, it is best to use the `error_queue` option to create an error queue and then use the `MaxRetries` middleware to route messages to this error queue after a certain amount of retries.
+
+### Implementing an error queue
+
+You can set the `error_queue` parameter to automatically create an error queue.
+
+```ruby
+my_queue =
+  queue(
+    'my_queue',
+    durable: true,
+    retry_queue: true,
+    retry_delay: 5000,
+    error_queue: true,
+  )
+```
+
+This will automatically create a queue named `my_queue.error`. It does not have any special properties, the helper's main purpose is to enforce naming conventions. In your consumer, you should then use the `MaxRetries` middleware to route messages to the error queue after a certain amount of retries.
+
+```ruby
+class MyConsumer < Ears::Consumer
+  use Ears::Middlewares::MaxRetries, retries: 3, error_queue: 'my_queue.error'
+
+  def work(delivery_info, metadata, payload)
+    # ...
+  end
+end
+```
+
+This will automatically route messages to `my_queue.error` after they have been re-tried three times. This prevents you from infinitely retrying a faulty message.
+
 ## Documentation
 
 If you need more in-depth information, look at [our API documentation](https://www.rubydoc.info/gems/ears).

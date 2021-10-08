@@ -5,6 +5,8 @@ require 'ears/consumer_wrapper'
 module Ears
   # Contains methods used in {Ears.setup} to set up your exchanges, queues and consumers.
   class Setup
+    QUEUE_PARAMS = %i[retry_queue retry_delay error_queue]
+
     # Creates a new exchange if it does not already exist.
     #
     # @param [String] name The name of the exchange.
@@ -19,9 +21,22 @@ module Ears
     #
     # @param [String] name The name of the queue.
     # @param [Hash] opts The options for the queue. These are passed on to +Bunny::Exchange.new+.
+    # @option args [Boolean] :retry_queue (false) Whether a retry queue should be created. The retry queue is configured as a dead-letter-exchange of the original queue automatically. The name of the queue will be the given name suffixed with ".retry".
+    # @option args [Integer] :retry_delay (5000) How long a retried message is delayed before being routed back to the original queue.
+    # @option args [Boolean] :error_queue (false) Whether an error queue should be created. The name of the queue will be the given name suffixed with ".error".
     # @return [Bunny::Queue] The queue that was either newly created or was already there.
     def queue(name, opts = {})
-      Bunny::Queue.new(Ears.channel, name, opts)
+      bunny_opts = opts.except(*QUEUE_PARAMS)
+      retry_delay = opts.fetch(:retry_delay, 5000)
+
+      create_retry_queue(name, retry_delay, bunny_opts) if opts[:retry_queue]
+      create_error_queue(name, bunny_opts) if opts[:error_queue]
+
+      Bunny::Queue.new(
+        Ears.channel,
+        name,
+        bunny_opts.merge(retry_opts(name, opts)),
+      )
     end
 
     # Creates and starts one or many consumers bound to the given queue.
@@ -46,6 +61,19 @@ module Ears
 
     private
 
+    def retry_opts(name, opts)
+      if opts[:retry_queue]
+        {
+          arguments: {
+            'x-dead-letter-exchange' => '',
+            'x-dead-letter-routing-key' => "#{name}.retry",
+          },
+        }
+      else
+        {}
+      end
+    end
+
     def create_consumer(queue, consumer_class, args, number)
       ConsumerWrapper.new(
         consumer_class.new,
@@ -68,6 +96,28 @@ module Ears
 
     def create_consumer_queue(queue, args)
       Bunny::Queue.new(create_consumer_channel(args), queue.name, queue.options)
+    end
+
+    def create_retry_queue(name, delay, opts)
+      Bunny::Queue.new(
+        Ears.channel,
+        "#{name}.retry",
+        opts.merge(retry_queue_opts(name, delay)),
+      )
+    end
+
+    def retry_queue_opts(name, delay)
+      {
+        arguments: {
+          'x-message-ttl' => delay,
+          'x-dead-letter-exchange' => '',
+          'x-dead-letter-routing-key' => name,
+        },
+      }
+    end
+
+    def create_error_queue(name, opts)
+      Bunny::Queue.new(Ears.channel, "#{name}.error", opts)
     end
   end
 end
