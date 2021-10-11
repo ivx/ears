@@ -26,7 +26,7 @@ module Ears
     # @option args [Boolean] :error_queue (false) Whether an error queue should be created. The name of the queue will be the given name suffixed with ".error".
     # @return [Bunny::Queue] The queue that was either newly created or was already there.
     def queue(name, opts = {})
-      bunny_opts = opts.except(*QUEUE_PARAMS)
+      bunny_opts = opts.reject { |k, _| QUEUE_PARAMS.include?(k) }
       retry_delay = opts.fetch(:retry_delay, 5000)
 
       create_retry_queue(name, retry_delay, bunny_opts) if opts[:retry_queue]
