@@ -22,7 +22,7 @@ module Ears
     # @param [String] name The name of the queue.
     # @param [Hash] opts The options for the queue. These are passed on to +Bunny::Exchange.new+.
     # @option args [Boolean] :retry_queue (false) Whether a retry queue should be created. The retry queue is configured as a dead-letter-exchange of the original queue automatically. The name of the queue will be the given name suffixed with ".retry".
-    # @option args [Integer] :retry_delay (5000) How long a retried message is delayed before being routed back to the original queue.
+    # @option args [Integer] :retry_delay (5000) How long (in ms) a retried message is delayed before being routed back to the original queue.
     # @option args [Boolean] :error_queue (false) Whether an error queue should be created. The name of the queue will be the given name suffixed with ".error".
     # @return [Bunny::Queue] The queue that was either newly created or was already there.
     def queue(name, opts = {})
