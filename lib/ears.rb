@@ -24,7 +24,8 @@ module Ears
     #
     # @return [Bunny::Session]
     def connection
-      @connection ||= Bunny.new.tap { |conn| conn.start }
+      @connection ||=
+        Bunny.new(configuration.rabbitmq_url).tap { |conn| conn.start }
     end
 
     # The channel for the current thread.
