@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 (2021-11.03)
+
+- fix the fact that the configuration was never used and bunny silently fell back to the `RABBITMQ_URL` env var
+
 ## 0.4.3 (2021-07-26)
 
 ### Changes
