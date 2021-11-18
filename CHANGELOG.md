@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.5.0 (2021-11.03)
+## 0.6.0 (2021-11-18)
+
+- add `connection_name` to configuration and make it a mandatory setting
+- validate configuration after calling `configure`
+
+## 0.5.0 (2021-11-03)
 
 - fix the fact that the configuration was never used and bunny silently fell back to the `RABBITMQ_URL` env var
 
