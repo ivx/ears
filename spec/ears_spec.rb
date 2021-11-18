@@ -21,14 +21,41 @@ RSpec.describe Ears do
     expect(Ears.configuration).to be_a(Ears::Configuration)
   end
 
-  it 'can be configured' do
-    Ears.configure { |config| config.rabbitmq_url = 'test' }
+  describe '.configure' do
+    it 'allows setting the configuration values' do
+      Ears.configure do |config|
+        config.rabbitmq_url = 'test'
+        config.connection_name = 'conn'
+      end
 
-    expect(Ears.configuration.rabbitmq_url).to eq('test')
+      expect(Ears.configuration.rabbitmq_url).to eq('test')
+    end
+
+    it 'throws an error if connection name was not set' do
+      Ears.reset!
+
+      expect {
+        Ears.configure { |config| config.rabbitmq_url = 'test' }
+      }.to raise_error(Ears::Configuration::ConnectionNameMissing)
+    end
   end
 
   describe '.connection' do
-    it 'connects when it is accessed' do
+    let(:rabbitmq_url) { 'amqp://lol:lol@kek.com:15672' }
+    let(:connection_name) { 'my connection' }
+
+    before do
+      Ears.configure do |config|
+        config.rabbitmq_url = rabbitmq_url
+        config.connection_name = connection_name
+      end
+    end
+
+    it 'connects with config parameters when it is accessed' do
+      expect(Bunny).to receive(:new).with(
+        rabbitmq_url,
+        connection_name: connection_name,
+      )
       expect(bunny).to receive(:start)
 
       Ears.connection

@@ -22,15 +22,18 @@ Or install it yourself as:
 
 ### Basic usage
 
-First, you should configure where `Ears` should connect to.
+First, you should configure `Ears`.
 
 ```ruby
 require 'ears'
 
 Ears.configure do |config|
   config.rabbitmq_url = 'amqp://user:password@myrmq:5672'
+  config.connection_name = 'My Consumer'
 end
 ```
+
+_Note_: `connection_name` is a mandatory setting!
 
 Next, define your exchanges, queues, and consumers by calling `Ears.setup`.
 

@@ -18,6 +18,7 @@ module Ears
     # @yieldparam configuration [Ears::Configuration] The global configuration instance.
     def configure
       yield(configuration)
+      configuration.validate!
     end
 
     # The global RabbitMQ connection used by Ears.
@@ -25,7 +26,12 @@ module Ears
     # @return [Bunny::Session]
     def connection
       @connection ||=
-        Bunny.new(configuration.rabbitmq_url).tap { |conn| conn.start }
+        Bunny
+          .new(
+            configuration.rabbitmq_url,
+            connection_name: configuration.connection_name,
+          )
+          .tap { |conn| conn.start }
     end
 
     # The channel for the current thread.
@@ -67,6 +73,7 @@ module Ears
     # Used internally for testing.
     def reset!
       @connection = nil
+      @configuration = nil
       Thread.current[:ears_channel] = nil
     end
   end
