@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0 (2021-12-06)
+
+- add options to create retry and error queues
+
 ## 0.6.0 (2021-11-18)
 
 - add `connection_name` to configuration and make it a mandatory setting
