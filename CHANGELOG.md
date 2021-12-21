@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1 (2021-12-21)
+
+- explicitly report Appsignal errors in middleware to make it more reliable
+
 ## 0.7.0 (2021-12-06)
 
 - add options to create retry and error queues

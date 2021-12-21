@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ears (0.7.0)
+    ears (0.7.1)
       bunny
       multi_json
 
@@ -54,7 +54,7 @@ GEM
       rubocop (~> 1.0)
       rubocop-ast (>= 1.1.0)
     ruby-progressbar (1.11.0)
-    set (1.0.1)
+    set (1.0.2)
     sorted_set (1.0.3)
       rbtree
       set (~> 1.0)
