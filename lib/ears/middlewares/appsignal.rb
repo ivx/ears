@@ -14,17 +14,29 @@ module Ears
       end
 
       def call(delivery_info, metadata, payload, app)
-        ::Appsignal.monitor_transaction(
-          transaction_name,
-          class: class_name,
-          method: 'work',
-          queue_start: Time.now.utc,
-        ) { app.call(delivery_info, metadata, payload) }
+        start_transaction do
+          begin
+            app.call(delivery_info, metadata, payload)
+          rescue => e
+            ::Appsignal.set_error(e)
+            raise
+          end
+        end
       end
 
       private
 
       attr_reader :transaction_name, :class_name
+
+      def start_transaction(&block)
+        ::Appsignal.monitor_transaction(
+          transaction_name,
+          class: class_name,
+          method: 'work',
+          queue_start: Time.now.utc,
+          &block
+        )
+      end
     end
   end
 end

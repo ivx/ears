@@ -36,4 +36,19 @@ RSpec.describe Ears::Middlewares::Appsignal do
       middleware.call(delivery_info, metadata, payload, Proc.new(&b))
     }.to yield_control
   end
+
+  it 'calls set_error when an error is raised' do
+    error = RuntimeError.new('moep')
+    expect(appsignal).to receive(:monitor_transaction).and_yield
+    expect(appsignal).to receive(:set_error).with(error)
+
+    expect do
+      middleware.call(
+        delivery_info,
+        metadata,
+        payload,
+        Proc.new { raise error },
+      )
+    end.to raise_error(error)
+  end
 end
