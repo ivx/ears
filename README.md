@@ -165,7 +165,7 @@ my_queue =
   queue('my_queue', durable: true, retry_queue: true, retry_delay: 5000)
 ```
 
-This will automatically create a queue named `my_queue.retry` and use the arguments `x-dead-letter-exchange` and `x-dead-letter-routing-key` to route rejected messages to it. When routed to the retry queue, messages will wait there for the number of milliseconds specified in `retry_delay`, after which they will be redelivered to the original queue.
+This will automatically create a queue named `my_queue.retry` and use the arguments `x-dead-letter-exchange` and `x-dead-letter-routing-key` to route rejected messages to it. When routed to the retry queue, messages will wait there for the number of milliseconds specified in `retry_delay`, after which they will be redelivered to the original queue. **Note that this will not automatically catch unhandled errors. You still have to catch any errors yourself and reject your message manually for the retry mechanism to work.**
 
 This will happen indefinitely, so if you want to bail out of this cycle at some point, it is best to use the `error_queue` option to create an error queue and then use the `MaxRetries` middleware to route messages to this error queue after a certain amount of retries.
 
