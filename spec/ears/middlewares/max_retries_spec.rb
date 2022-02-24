@@ -87,4 +87,14 @@ RSpec.describe Ears::Middlewares::MaxRetries do
       ).to eq(:moep)
     end
   end
+
+  context 'when metadata has no headers' do
+    let(:metadata) { instance_double(Bunny::MessageProperties, headers: nil) }
+
+    it 'returns downstream result if no death headers are present' do
+      expect(
+        middleware.call(delivery_info, metadata, payload, Proc.new { :moep }),
+      ).to eq(:moep)
+    end
+  end
 end
