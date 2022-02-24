@@ -30,6 +30,8 @@ module Ears
       end
 
       def retries_exceeded?(metadata)
+        return false if metadata.headers.nil?
+
         rejected_deaths =
           metadata
             .headers

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2 (2022-02-24)
+
+- change retry middleware to gracefully handle messages that do not have a header in their metadata
+
 ## 0.7.1 (2021-12-21)
 
 - explicitly report Appsignal errors in middleware to make it more reliable
