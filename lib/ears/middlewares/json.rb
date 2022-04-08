@@ -15,10 +15,14 @@ module Ears
       end
 
       def call(delivery_info, metadata, payload, app)
-        parsed_payload = MultiJson.load(payload, symbolize_keys: symbolize_keys)
+        begin
+          parsed_payload =
+            MultiJson.load(payload, symbolize_keys: symbolize_keys)
+        rescue => e
+          return on_error.call(e)
+        end
+
         app.call(delivery_info, metadata, parsed_payload)
-      rescue => e
-        on_error.call(e)
       end
 
       private
