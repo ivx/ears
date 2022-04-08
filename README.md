@@ -92,7 +92,9 @@ require 'ears/middlewares/json'
 
 class MyConsumer < Ears::Consumer
   # register the JSON middleware and don't symbolize keys (this can be omitted, the default is true)
-  use Ears::Middlewares::JSON, symbolize_keys: false
+  use Ears::Middlewares::JSON,
+      on_error: Proc.new { :reject },
+      symbolize_keys: false
 
   def work(delivery_info, metadata, payload)
     return ack unless payload['data'].nil? # this now just works
