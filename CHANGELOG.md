@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0 (2022-04-08)
+
+- JSON middleware now requires an `on_error` callback in the options
+
 ## 0.7.2 (2022-02-24)
 
 - change retry middleware to gracefully handle messages that do not have a header in their metadata
