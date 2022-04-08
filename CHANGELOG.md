@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1 (2022-04-08)
+
+- do not rescue errors outside the scope of the error handler in JSON middleware
+
 ## 0.8.0 (2022-04-08)
 
 - JSON middleware now requires an `on_error` callback in the options
