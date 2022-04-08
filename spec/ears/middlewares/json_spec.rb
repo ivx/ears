@@ -47,6 +47,12 @@ RSpec.describe Ears::Middlewares::JSON do
       expect { Ears::Middlewares::JSON.new }.to raise_error(KeyError)
     end
 
+    it 'does not catch an error down the line' do
+      expect {
+        middleware.call(delivery_info, metadata, payload, Proc.new { raise })
+      }.to raise_error(RuntimeError)
+    end
+
     context 'when encountering an error' do
       let(:payload) { 'This is not JSON' }
 
