@@ -6,11 +6,11 @@ module Ears
     # A middleware that automatically parses your JSON payload.
     class JSON < Middleware
       # @param [Hash] opts The options for the middleware.
-      # @option opts [Proc] :on_error A Proc to be called when an error occurs during processing
+      # @option opts [Proc] :on_error (Proc.new { :reject }) A Proc to be called when an error occurs during processing.
       # @option opts [Boolean] :symbolize_keys (true) Whether to symbolize the keys of your payload.
       def initialize(opts = {})
         super()
-        @on_error = opts.fetch(:on_error)
+        @on_error = opts.fetch(:on_error, Proc.new { :reject })
         @symbolize_keys = opts.fetch(:symbolize_keys, true)
       end
 

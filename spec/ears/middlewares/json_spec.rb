@@ -43,8 +43,24 @@ RSpec.describe Ears::Middlewares::JSON do
       end.to yield_control
     end
 
-    it 'raises when initialized without error handler' do
-      expect { Ears::Middlewares::JSON.new }.to raise_error(KeyError)
+    context 'when initialized without error handler' do
+      let(:options) { {} }
+      let(:payload) { 'This is not JSON' }
+
+      it 'does not raise' do
+        expect { middleware }.not_to raise_error
+      end
+
+      it 'rejects when encountering an error' do
+        expect(
+          middleware.call(
+            delivery_info,
+            metadata,
+            payload,
+            Proc.new { :success },
+          ),
+        ).to eq(:reject)
+      end
     end
 
     it 'does not catch an error down the line' do
