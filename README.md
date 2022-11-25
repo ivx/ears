@@ -94,7 +94,7 @@ class MyConsumer < Ears::Consumer
   # register the JSON middleware and don't symbolize keys (this can be omitted, the default is true)
   # and reject the message on parsing error. This defaults to Proc.new { :reject }.
   use Ears::Middlewares::JSON,
-      on_error: Proc.new { :i_dont_care },
+      on_error: Proc.new { :nack },
       symbolize_keys: false
 
   def work(delivery_info, metadata, payload)
