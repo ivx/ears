@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.2 (2022-11-25)
+
+- default JSON middleware error handler to reject
+
 ## 0.8.1 (2022-04-08)
 
 - do not rescue errors outside the scope of the error handler in JSON middleware
