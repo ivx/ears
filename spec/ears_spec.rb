@@ -43,11 +43,27 @@ RSpec.describe Ears do
   describe '.connection' do
     let(:rabbitmq_url) { 'amqp://lol:lol@kek.com:15672' }
     let(:connection_name) { 'my connection' }
+    let(:recover_from_connection_close) { false }
 
     before do
       Ears.configure do |config|
         config.rabbitmq_url = rabbitmq_url
         config.connection_name = connection_name
+        config.recover_from_connection_close = recover_from_connection_close
+      end
+    end
+
+    context 'when recover_from_connection_close is set' do
+      let(:recover_from_connection_close) { nil }
+
+      it 'connects with config parameters when it is accessed' do
+        expect(Bunny).to receive(:new).with(
+          rabbitmq_url,
+          connection_name: connection_name,
+        )
+        expect(bunny).to receive(:start)
+
+        Ears.connection
       end
     end
 
@@ -55,6 +71,7 @@ RSpec.describe Ears do
       expect(Bunny).to receive(:new).with(
         rabbitmq_url,
         connection_name: connection_name,
+        recover_from_connection_close: recover_from_connection_close,
       )
       expect(bunny).to receive(:start)
 

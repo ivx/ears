@@ -30,6 +30,7 @@ require 'ears'
 Ears.configure do |config|
   config.rabbitmq_url = 'amqp://user:password@myrmq:5672'
   config.connection_name = 'My Consumer'
+  config.recover_from_connection_close = false, # optional configuration, defaults to true if not set
 end
 ```
 

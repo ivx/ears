@@ -27,10 +27,7 @@ module Ears
     def connection
       @connection ||=
         Bunny
-          .new(
-            configuration.rabbitmq_url,
-            connection_name: configuration.connection_name,
-          )
+          .new(configuration.rabbitmq_url, **connection_config)
           .tap { |conn| conn.start }
     end
 
@@ -75,6 +72,16 @@ module Ears
       @connection = nil
       @configuration = nil
       Thread.current[:ears_channel] = nil
+    end
+
+    private
+
+    def connection_config
+      {
+        connection_name: configuration.connection_name,
+        recover_from_connection_close:
+          configuration.recover_from_connection_close,
+      }.compact
     end
   end
 end
