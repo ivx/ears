@@ -12,6 +12,9 @@ module Ears
     # @return [String] the name for the RabbitMQ connection.
     attr_accessor :connection_name
 
+    # @return [Boolean] if the recover_from_connection_close value is set for the RabbitMQ connection.
+    attr_accessor :recover_from_connection_close
+
     def initialize
       @rabbitmq_url = DEFAULT_RABBITMQ_URL
     end

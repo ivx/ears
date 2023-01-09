@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0 (2023-01-09)
+
+- Add option to configure recover_from_connection_close
+
 ## 0.8.2 (2022-11-25)
 
 - default JSON middleware error handler to reject
