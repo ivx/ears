@@ -49,13 +49,11 @@ module Ears
     def consumer(queue, consumer_class, threads = 1, args = {})
       threads.times do |n|
         consumer_queue = create_consumer_queue(queue, args)
-        create_consumer(consumer_queue, consumer_class, args, n + 1)
-          .tap do |consumer|
-          consumer.on_delivery do |delivery_info, metadata, payload|
-            consumer.process_delivery(delivery_info, metadata, payload)
-          end
-          consumer_queue.subscribe_with(consumer)
+        consumer = create_consumer(consumer_queue, consumer_class, args, n + 1)
+        consumer.on_delivery do |delivery_info, metadata, payload|
+          consumer.process_delivery(delivery_info, metadata, payload)
         end
+        consumer_queue.subscribe_with(consumer)
       end
     end
 

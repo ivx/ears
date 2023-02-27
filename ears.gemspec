@@ -13,11 +13,13 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = Gem::Requirement.new('>= 2.7.0')
 
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/ivx/ears'
-  spec.metadata['changelog_uri'] =
-    'https://github.com/ivx/ears/blob/master/CHANGELOG.md'
+  spec.metadata[
+    'changelog_uri'
+  ] = 'https://github.com/ivx/ears/blob/master/CHANGELOG.md'
 
   spec.post_install_message =
     '
@@ -27,9 +29,8 @@ You may want to have a look into the CHANGELOG!
 
   spec.files =
     Dir.chdir(File.expand_path('..', __FILE__)) do
-      `git ls-files -z`.split("\x0").reject do |f|
-        f.match(%r{^(test|spec|features)/})
-      end
+      `git ls-files -z`.split("\x0")
+        .reject { |f| f.match(%r{^(test|spec|features)/}) }
     end
   spec.bindir = 'exe'
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
@@ -37,12 +38,4 @@ You may want to have a look into the CHANGELOG!
 
   spec.add_dependency 'bunny'
   spec.add_dependency 'multi_json'
-
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'redcarpet'
-  spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'rubocop'
-  spec.add_development_dependency 'rubocop-rake'
-  spec.add_development_dependency 'rubocop-rspec'
-  spec.add_development_dependency 'yard'
 end

@@ -5,7 +5,7 @@ RSpec.describe Ears::Middlewares::Appsignal do
   let(:delivery_info) { instance_double(Bunny::DeliveryInfo) }
   let(:metadata) { instance_double(Bunny::MessageProperties) }
   let(:payload) { 'payload' }
-  let(:appsignal) { class_double('Appsignal').as_stubbed_const }
+  let(:appsignal) { stub_const('Appsignal', Class.new) }
   let(:middleware) do
     Ears::Middlewares::Appsignal.new(
       transaction_name: 'perform_job.test',
@@ -24,14 +24,12 @@ RSpec.describe Ears::Middlewares::Appsignal do
   end
 
   it 'starts an Appsignal transaction and calls the downstream middleware' do
-    expect(appsignal).to receive(:monitor_transaction)
-      .with(
-        'perform_job.test',
-        class: 'MyConsumer',
-        method: 'work',
-        queue_start: now,
-      )
-      .and_yield
+    expect(appsignal).to receive(:monitor_transaction).with(
+      'perform_job.test',
+      class: 'MyConsumer',
+      method: 'work',
+      queue_start: now,
+    ).and_yield
     expect { |b|
       middleware.call(delivery_info, metadata, payload, Proc.new(&b))
     }.to yield_control

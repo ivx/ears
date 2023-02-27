@@ -14,7 +14,7 @@ RSpec.describe Ears do
   end
 
   it 'has a version number' do
-    expect(Ears::VERSION).not_to be nil
+    expect(Ears::VERSION).not_to be_nil
   end
 
   it 'has a configuration' do
@@ -81,9 +81,9 @@ RSpec.describe Ears do
 
   describe '.channel' do
     it 'creates a channel when it is accessed' do
-      expect(bunny).to receive(:create_channel)
-        .with(nil, 1, true)
-        .and_return(channel)
+      expect(bunny).to receive(:create_channel).with(nil, 1, true).and_return(
+        channel,
+      )
       expect(channel).to receive(:prefetch).with(1)
       expect(channel).to receive(:on_uncaught_exception)
 
@@ -151,12 +151,16 @@ RSpec.describe Ears do
     end
 
     it 'starts a consumer subscribed to a queue' do
-      expect(consumer_wrapper).to receive(:on_delivery)
-        .and_yield(delivery_info, metadata, payload)
-        .ordered
-      expect(consumer_wrapper).to receive(:process_delivery)
-        .with(delivery_info, metadata, payload)
-        .ordered
+      expect(consumer_wrapper).to receive(:on_delivery).and_yield(
+        delivery_info,
+        metadata,
+        payload,
+      ).ordered
+      expect(consumer_wrapper).to receive(:process_delivery).with(
+        delivery_info,
+        metadata,
+        payload,
+      ).ordered
       expect(queue).to receive(:subscribe_with).with(consumer_wrapper).ordered
 
       Ears.setup do

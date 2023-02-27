@@ -19,17 +19,23 @@ RSpec.describe Ears::Setup do
 
   describe '#exchange' do
     it 'creates a new bunny exchange with the given options' do
-      expect(Bunny::Exchange).to receive(:new)
-        .with(channel, :topic, 'name', {})
-        .and_return(exchange)
+      expect(Bunny::Exchange).to receive(:new).with(
+        channel,
+        :topic,
+        'name',
+        {},
+      ).and_return(exchange)
 
       expect(Ears::Setup.new.exchange('name', :topic)).to eq(exchange)
     end
 
     it 'passes the given options to the exchange' do
-      expect(Bunny::Exchange).to receive(:new)
-        .with(channel, :topic, 'name', { test: 1 })
-        .and_return(exchange)
+      expect(Bunny::Exchange).to receive(:new).with(
+        channel,
+        :topic,
+        'name',
+        { test: 1 },
+      ).and_return(exchange)
 
       expect(Ears::Setup.new.exchange('name', :topic, { test: 1 })).to eq(
         exchange,
@@ -39,35 +45,37 @@ RSpec.describe Ears::Setup do
 
   describe '#queue' do
     it 'creates a new bunny queue with the given options' do
-      expect(Bunny::Queue).to receive(:new)
-        .with(channel, 'name', {})
-        .and_return(queue)
+      expect(Bunny::Queue).to receive(:new).with(
+        channel,
+        'name',
+        {},
+      ).and_return(queue)
 
       expect(Ears::Setup.new.queue('name')).to eq(queue)
     end
 
     it 'passes the given options to the queue' do
-      expect(Bunny::Queue).to receive(:new)
-        .with(channel, 'name', { test: 1 })
-        .and_return(queue)
+      expect(Bunny::Queue).to receive(:new).with(
+        channel,
+        'name',
+        { test: 1 },
+      ).and_return(queue)
 
       expect(Ears::Setup.new.queue('name', { test: 1 })).to eq(queue)
     end
 
     it 'does not pass on options that are processed by ears' do
-      expect(Bunny::Queue).to receive(:new)
-        .with(
-          channel,
-          'name',
-          {
-            test: 1,
-            arguments: {
-              'x-dead-letter-exchange' => '',
-              'x-dead-letter-routing-key' => 'name.retry',
-            },
+      expect(Bunny::Queue).to receive(:new).with(
+        channel,
+        'name',
+        {
+          test: 1,
+          arguments: {
+            'x-dead-letter-exchange' => '',
+            'x-dead-letter-routing-key' => 'name.retry',
           },
-        )
-        .and_return(queue)
+        },
+      ).and_return(queue)
 
       expect(
         Ears::Setup.new.queue(
@@ -150,9 +158,13 @@ RSpec.describe Ears::Setup do
     end
 
     it 'instantiates the given class and registers it as a consumer' do
-      expect(Ears::ConsumerWrapper).to receive(:new)
-        .with(consumer_instance, channel, queue, 'MyConsumer-1', {})
-        .and_return(consumer_wrapper)
+      expect(Ears::ConsumerWrapper).to receive(:new).with(
+        consumer_instance,
+        channel,
+        queue,
+        'MyConsumer-1',
+        {},
+      ).and_return(consumer_wrapper)
       expect(consumer_wrapper).to receive(:on_delivery).and_yield(
         delivery_info,
         metadata,
@@ -169,9 +181,13 @@ RSpec.describe Ears::Setup do
     end
 
     it 'passes the consumer arguments' do
-      expect(Ears::ConsumerWrapper).to receive(:new)
-        .with(consumer_instance, channel, queue, 'MyConsumer-1', { a: 1 })
-        .and_return(consumer_wrapper)
+      expect(Ears::ConsumerWrapper).to receive(:new).with(
+        consumer_instance,
+        channel,
+        queue,
+        'MyConsumer-1',
+        { a: 1 },
+      ).and_return(consumer_wrapper)
       expect(consumer_wrapper).to receive(:on_delivery).and_yield(
         delivery_info,
         metadata,
@@ -220,12 +236,20 @@ RSpec.describe Ears::Setup do
     end
 
     it 'numbers the consumers' do
-      expect(Ears::ConsumerWrapper).to receive(:new)
-        .with(consumer_instance, channel, queue, 'MyConsumer-1', {})
-        .and_return(consumer_wrapper)
-      expect(Ears::ConsumerWrapper).to receive(:new)
-        .with(consumer_instance, channel, queue, 'MyConsumer-2', {})
-        .and_return(consumer_wrapper)
+      expect(Ears::ConsumerWrapper).to receive(:new).with(
+        consumer_instance,
+        channel,
+        queue,
+        'MyConsumer-1',
+        {},
+      ).and_return(consumer_wrapper)
+      expect(Ears::ConsumerWrapper).to receive(:new).with(
+        consumer_instance,
+        channel,
+        queue,
+        'MyConsumer-2',
+        {},
+      ).and_return(consumer_wrapper)
 
       Ears::Setup.new.consumer(queue, MyConsumer, 2)
     end
