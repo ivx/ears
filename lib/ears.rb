@@ -35,13 +35,12 @@ module Ears
     #
     # @return [Bunny::Channel]
     def channel
-      Thread.current[:ears_channel] ||=
-        connection
-          .create_channel(nil, 1, true)
-          .tap do |channel|
-            channel.prefetch(1)
-            channel.on_uncaught_exception { |error| Ears.error!(error) }
-          end
+      Thread.current[:ears_channel] ||= connection
+        .create_channel(nil, 1, true)
+        .tap do |channel|
+          channel.prefetch(1)
+          channel.on_uncaught_exception { |error| Ears.error!(error) }
+        end
     end
 
     # Used to set up your exchanges, queues and consumers. See {Ears::Setup} for implementation details.

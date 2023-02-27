@@ -19,10 +19,10 @@ RSpec.describe Ears::Middlewares::JSON do
     it 'calls the next middleware with a parsed payload' do
       expect do |b|
         proc =
-          Proc.new { |_, _, payload, _block|
+          Proc.new do |_, _, payload, _block|
             expect(payload).to eq({ my: 'payload' })
             Proc.new(&b).call
-          }
+          end
         middleware.call(delivery_info, metadata, payload, proc)
       end.to yield_control
     end
@@ -35,10 +35,10 @@ RSpec.describe Ears::Middlewares::JSON do
         )
       expect do |b|
         proc =
-          Proc.new { |_, _, payload, _block|
+          Proc.new do |_, _, payload, _block|
             expect(payload).to eq({ 'my' => 'payload' })
             Proc.new(&b).call
-          }
+          end
         middleware.call(delivery_info, metadata, payload, proc)
       end.to yield_control
     end

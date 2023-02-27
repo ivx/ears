@@ -38,9 +38,11 @@ RSpec.describe Ears::ConsumerWrapper do
 
   describe '#process_delivery' do
     it 'calls the consumer' do
-      expect(consumer).to receive(:process_delivery)
-        .with(delivery_info, metadata, payload)
-        .and_return(:ack)
+      expect(consumer).to receive(:process_delivery).with(
+        delivery_info,
+        metadata,
+        payload,
+      ).and_return(:ack)
 
       wrapper.process_delivery(delivery_info, metadata, payload)
     end

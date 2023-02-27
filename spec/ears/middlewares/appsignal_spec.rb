@@ -24,14 +24,12 @@ RSpec.describe Ears::Middlewares::Appsignal do
   end
 
   it 'starts an Appsignal transaction and calls the downstream middleware' do
-    expect(appsignal).to receive(:monitor_transaction)
-      .with(
-        'perform_job.test',
-        class: 'MyConsumer',
-        method: 'work',
-        queue_start: now,
-      )
-      .and_yield
+    expect(appsignal).to receive(:monitor_transaction).with(
+      'perform_job.test',
+      class: 'MyConsumer',
+      method: 'work',
+      queue_start: now,
+    ).and_yield
     expect { |b|
       middleware.call(delivery_info, metadata, payload, Proc.new(&b))
     }.to yield_control

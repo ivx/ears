@@ -23,9 +23,10 @@ module Ears
       attr_reader :retries, :error_queue
 
       def handle_exceeded(payload)
-        Bunny::Exchange
-          .default(Ears.channel)
-          .publish(payload, routing_key: error_queue)
+        Bunny::Exchange.default(Ears.channel).publish(
+          payload,
+          routing_key: error_queue,
+        )
         :ack
       end
 

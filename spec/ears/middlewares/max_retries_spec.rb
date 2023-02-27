@@ -66,9 +66,9 @@ RSpec.describe Ears::Middlewares::MaxRetries do
     end
 
     it 'publishes the message to the configured error exchange' do
-      expect(Bunny::Exchange).to receive(:default)
-        .with(channel)
-        .and_return(default_exchange)
+      expect(Bunny::Exchange).to receive(:default).with(channel).and_return(
+        default_exchange,
+      )
       expect(default_exchange).to receive(:publish).with(
         payload,
         routing_key: error_queue,

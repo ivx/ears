@@ -27,9 +27,11 @@ RSpec.describe Ears::Consumer do
 
   describe '#process_delivery' do
     it 'calls #work' do
-      expect(instance).to receive(:work)
-        .with(delivery_info, metadata, payload)
-        .and_return(:ack)
+      expect(instance).to receive(:work).with(
+        delivery_info,
+        metadata,
+        payload,
+      ).and_return(:ack)
 
       instance.process_delivery(delivery_info, metadata, payload)
     end
@@ -168,12 +170,12 @@ RSpec.describe Ears::Consumer do
     end
 
     it 'calls middlewares in the correct order' do
-      expect(middleware).to receive(:new)
-        .and_return(middleware_instance)
-        .ordered
-      expect(second_middleware).to receive(:new)
-        .and_return(second_middleware_instance)
-        .ordered
+      expect(middleware).to receive(:new).and_return(
+        middleware_instance,
+      ).ordered
+      expect(second_middleware).to receive(:new).and_return(
+        second_middleware_instance,
+      ).ordered
       expect(middleware_instance).to receive(:call) do |d, m, p, app|
         app.call(d, m, p)
       end.ordered
