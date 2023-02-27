@@ -27,6 +27,7 @@ module Ears
     # @return [Bunny::Queue] The queue that was either newly created or was already there.
     def queue(name, opts = {})
       bunny_opts = opts.reject { |k, _| QUEUE_PARAMS.include?(k) }
+      retry_args = retry_arguments(name, opts)
       retry_delay = opts.fetch(:retry_delay, 5000)
 
       create_retry_queue(name, retry_delay, bunny_opts) if opts[:retry_queue]
@@ -35,7 +36,7 @@ module Ears
       Bunny::Queue.new(
         Ears.channel,
         name,
-        bunny_opts.merge(retry_opts(name, opts)),
+        queue_options(bunny_opts, retry_args),
       )
     end
 
@@ -59,17 +60,20 @@ module Ears
 
     private
 
-    def retry_opts(name, opts)
-      if opts[:retry_queue]
-        {
-          arguments: {
-            'x-dead-letter-exchange' => '',
-            'x-dead-letter-routing-key' => "#{name}.retry",
-          },
-        }
-      else
-        {}
-      end
+    def queue_options(bunny_opts, retry_arguments)
+      return bunny_opts unless retry_arguments
+
+      arguments = bunny_opts.fetch(:arguments, {})
+      bunny_opts.merge({ arguments: arguments.merge(retry_arguments) })
+    end
+
+    def retry_arguments(name, opts)
+      return unless opts[:retry_queue]
+
+      {
+        'x-dead-letter-exchange' => '',
+        'x-dead-letter-routing-key' => "#{name}.retry",
+      }
     end
 
     def create_consumer(queue, consumer_class, args, number)
