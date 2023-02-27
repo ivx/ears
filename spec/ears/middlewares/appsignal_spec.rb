@@ -5,7 +5,7 @@ RSpec.describe Ears::Middlewares::Appsignal do
   let(:delivery_info) { instance_double(Bunny::DeliveryInfo) }
   let(:metadata) { instance_double(Bunny::MessageProperties) }
   let(:payload) { 'payload' }
-  let(:appsignal) { class_double('Appsignal').as_stubbed_const }
+  let(:appsignal) { stub_const('Appsignal', Class.new) }
   let(:middleware) do
     Ears::Middlewares::Appsignal.new(
       transaction_name: 'perform_job.test',

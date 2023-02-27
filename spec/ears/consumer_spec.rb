@@ -47,19 +47,25 @@ RSpec.describe Ears::Consumer do
     it 'allows returning :ack' do
       allow(instance).to receive(:work).and_return(:ack)
 
-      instance.process_delivery(delivery_info, metadata, payload)
+      expect(
+        instance.process_delivery(delivery_info, metadata, payload),
+      ).to be :ack
     end
 
     it 'allows returning :reject' do
       allow(instance).to receive(:work).and_return(:reject)
 
-      instance.process_delivery(delivery_info, metadata, payload)
+      expect(
+        instance.process_delivery(delivery_info, metadata, payload),
+      ).to be :reject
     end
 
     it 'allows returning :requeue' do
       allow(instance).to receive(:work).and_return(:requeue)
 
-      instance.process_delivery(delivery_info, metadata, payload)
+      expect(
+        instance.process_delivery(delivery_info, metadata, payload),
+      ).to be :requeue
     end
 
     it 'raises an error if #work does not return a valid symbol' do
@@ -148,12 +154,10 @@ RSpec.describe Ears::Consumer do
         .new
     end
 
-    let(:middleware) { class_double('Middleware').as_stubbed_const }
-    let(:middleware_instance) { instance_double('Middleware') }
-    let(:second_middleware) do
-      class_double('SecondMiddleware').as_stubbed_const
-    end
-    let(:second_middleware_instance) { instance_double('SecondMiddleware') }
+    let(:middleware) { stub_const('Middleware', Class.new) }
+    let(:middleware_instance) { instance_double(Middleware) }
+    let(:second_middleware) { stub_const('SecondMiddleware', Class.new) }
+    let(:second_middleware_instance) { instance_double(SecondMiddleware) }
 
     it 'wraps the given middleware around the call to work' do
       expect(middleware).to receive(:new).and_return(middleware_instance)

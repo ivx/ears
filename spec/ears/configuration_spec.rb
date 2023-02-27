@@ -24,13 +24,13 @@ RSpec.describe Ears::Configuration do
   it 'allows setting the recover_from_connection_close' do
     configuration.recover_from_connection_close = false
 
-    expect(configuration.recover_from_connection_close).to eq(false)
+    expect(configuration.recover_from_connection_close).to be(false)
   end
 
   describe '#validate!' do
     it 'returns nil on valid configuration' do
       configuration.connection_name = 'test'
-      expect(configuration.validate!).to eq(nil)
+      expect(configuration.validate!).to be_nil
     end
 
     it 'raises an error if connection name is not set' do

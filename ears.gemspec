@@ -13,6 +13,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = Gem::Requirement.new('>= 2.7.0')
 
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/ivx/ears'
@@ -37,13 +38,4 @@ You may want to have a look into the CHANGELOG!
 
   spec.add_dependency 'bunny'
   spec.add_dependency 'multi_json'
-
-  spec.add_development_dependency 'prettier'
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'redcarpet'
-  spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'rubocop'
-  spec.add_development_dependency 'rubocop-rake'
-  spec.add_development_dependency 'rubocop-rspec'
-  spec.add_development_dependency 'yard'
 end

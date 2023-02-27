@@ -14,7 +14,7 @@ RSpec.describe Ears do
   end
 
   it 'has a version number' do
-    expect(Ears::VERSION).not_to be nil
+    expect(Ears::VERSION).not_to be_nil
   end
 
   it 'has a configuration' do
