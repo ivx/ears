@@ -64,80 +64,113 @@ RSpec.describe Ears::Setup do
       expect(Ears::Setup.new.queue('name', { test: 1 })).to eq(queue)
     end
 
-    it 'does not pass on options that are processed by ears' do
-      expect(Bunny::Queue).to receive(:new).with(
-        channel,
-        'name',
-        {
-          test: 1,
-          arguments: {
-            'x-dead-letter-exchange' => '',
-            'x-dead-letter-routing-key' => 'name.retry',
-          },
-        },
-      ).and_return(queue)
-
-      expect(
-        Ears::Setup.new.queue(
+    context 'with retry queue' do
+      it 'does not pass on options that are processed by ears' do
+        expect(Bunny::Queue).to receive(:new).with(
+          channel,
           'name',
-          { retry_queue: true, retry_delay: 1000, error_queue: true, test: 1 },
-        ),
-      ).to eq(queue)
-    end
-
-    it 'creates a retry queue with a derived name when option is set' do
-      expect(Bunny::Queue).to receive(:new).with(
-        channel,
-        'name.retry',
-        {
-          arguments: {
-            'x-message-ttl' => 5000,
-            'x-dead-letter-exchange' => '',
-            'x-dead-letter-routing-key' => 'name',
+          {
+            test: 1,
+            arguments: {
+              'x-dead-letter-exchange' => '',
+              'x-dead-letter-routing-key' => 'name.retry',
+            },
           },
-        },
-      )
+        ).and_return(queue)
 
-      expect(Ears::Setup.new.queue('name', retry_queue: true)).to eq(queue)
-    end
+        expect(
+          Ears::Setup.new.queue(
+            'name',
+            { retry_queue: true, retry_delay: 1000, test: 1 },
+          ),
+        ).to eq(queue)
+      end
 
-    it 'adds the retry queue as a deadletter to the original queue' do
-      expect(Bunny::Queue).to receive(:new).with(
-        channel,
-        'name',
-        {
-          arguments: {
-            'x-dead-letter-exchange' => '',
-            'x-dead-letter-routing-key' => 'name.retry',
+      it 'creates a retry queue with a derived name' do
+        expect(Bunny::Queue).to receive(:new).with(
+          channel,
+          'name.retry',
+          {
+            arguments: {
+              'x-message-ttl' => 5000,
+              'x-dead-letter-exchange' => '',
+              'x-dead-letter-routing-key' => 'name',
+            },
           },
-        },
-      )
+        )
 
-      expect(Ears::Setup.new.queue('name', retry_queue: true)).to eq(queue)
-    end
+        expect(Ears::Setup.new.queue('name', retry_queue: true)).to eq(queue)
+      end
 
-    it 'uses the given retry delay for the retry queue' do
-      expect(Bunny::Queue).to receive(:new).with(
-        channel,
-        'name.retry',
-        {
-          arguments: {
-            'x-message-ttl' => 1000,
-            'x-dead-letter-exchange' => '',
-            'x-dead-letter-routing-key' => 'name',
+      it 'adds the retry queue as a deadletter to the original queue' do
+        expect(Bunny::Queue).to receive(:new).with(
+          channel,
+          'name',
+          {
+            arguments: {
+              'x-dead-letter-exchange' => '',
+              'x-dead-letter-routing-key' => 'name.retry',
+            },
           },
-        },
-      )
+        )
 
-      expect(
-        Ears::Setup.new.queue('name', retry_queue: true, retry_delay: 1000),
-      ).to eq(queue)
+        expect(Ears::Setup.new.queue('name', retry_queue: true)).to eq(queue)
+      end
+
+      it 'uses the given retry delay for the retry queue' do
+        expect(Bunny::Queue).to receive(:new).with(
+          channel,
+          'name.retry',
+          {
+            arguments: {
+              'x-message-ttl' => 1000,
+              'x-dead-letter-exchange' => '',
+              'x-dead-letter-routing-key' => 'name',
+            },
+          },
+        )
+
+        expect(
+          Ears::Setup.new.queue('name', retry_queue: true, retry_delay: 1000),
+        ).to eq(queue)
+      end
+
+      it 'merges retry options into the arguments' do
+        expect(Bunny::Queue).to receive(:new).with(
+          channel,
+          'name',
+          {
+            arguments: {
+              'x-max-length-bytes' => 1_048_576,
+              'x-overflow' => 'reject-publish',
+              'x-dead-letter-exchange' => '',
+              'x-dead-letter-routing-key' => 'name.retry',
+            },
+          },
+        ).and_return(queue)
+
+        expect(
+          Ears::Setup.new.queue(
+            'name',
+            {
+              retry_queue: true,
+              retry_delay: 1000,
+              arguments: {
+                'x-max-length-bytes' => 1_048_576,
+                'x-overflow' => 'reject-publish',
+              },
+            },
+          ),
+        ).to eq(queue)
+      end
     end
 
-    it 'creates an error queue with derived name if option is set' do
-      expect(Bunny::Queue).to receive(:new).with(channel, 'name.error', {})
+    context 'with error queue' do
+      it 'creates an error queue with derived name if option is set' do
+        expect(Bunny::Queue).to receive(:new).with(channel, 'name.error', {})
 
-      expect(Ears::Setup.new.queue('name', error_queue: true)).to eq(queue)
+        expect(Ears::Setup.new.queue('name', error_queue: true)).to eq(queue)
+      end
     end
   end
 
