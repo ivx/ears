@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1 (2023-02-28)
+
+- Fix bug where queue arguments were ignored with error_queue option
+
 ## 0.9.0 (2023-01-09)
 
 - Add option to configure recover_from_connection_close
