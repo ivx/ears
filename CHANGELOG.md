@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.3 (2023-03-02)
+
+- Update gem ownership information
+
 ## 0.9.2 (2023-03-02)
 
 - Remove Rubygems MFA requirement to prepare automatic releases
