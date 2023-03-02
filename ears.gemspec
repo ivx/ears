@@ -13,7 +13,9 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = Gem::Requirement.new('>= 2.7.0')
 
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
-  spec.metadata['rubygems_mfa_required'] = 'true'
+
+  # Disabled for automatic relase on GH action
+  spec.metadata['rubygems_mfa_required'] = 'false' # rubocop:disable Gemspec/RequireMFA
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/ivx/ears'
