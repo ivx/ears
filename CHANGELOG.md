@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.2 (2023-03-02)
+
+- Remove Rubygems MFA requirement to prepare automatic releases
+
 ## 0.9.1 (2023-02-28)
 
 - Fix bug where queue arguments were ignored with error_queue option
