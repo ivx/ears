@@ -3,8 +3,8 @@ require_relative 'lib/ears/version'
 Gem::Specification.new do |spec|
   spec.name = 'ears'
   spec.version = Ears::VERSION
-  spec.authors = ['Mario Mainz']
-  spec.email = ['mario.mainz@invision.de']
+  spec.authors = ['InVision AG']
+  spec.email = ['johannes.luedke@invision.de']
 
   spec.summary = 'A gem for building RabbitMQ consumers.'
   spec.description = 'A gem for building RabbitMQ consumers.'
