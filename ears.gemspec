@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.metadata['source_code_uri'] = 'https://github.com/ivx/ears'
   spec.metadata[
     'changelog_uri'
-  ] = 'https://github.com/ivx/ears/blob/master/CHANGELOG.md'
+  ] = 'https://github.com/ivx/ears/blob/main/CHANGELOG.md'
 
   spec.post_install_message =
     '
