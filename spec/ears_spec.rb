@@ -171,4 +171,25 @@ RSpec.describe Ears do
       end
     end
   end
+
+  describe '.stop!' do
+    before { allow(bunny).to receive(:close) }
+
+    it 'stops the connection' do
+      Ears.stop!
+
+      expect(bunny).to have_received(:close)
+    end
+
+    it 'resets the connection' do
+      Ears.connection
+
+      Ears.stop!
+
+      Ears.connection
+      Ears.connection
+
+      expect(Bunny).to have_received(:new).twice
+    end
+  end
 end
