@@ -58,6 +58,12 @@ module Ears
       raise @error if @error
     end
 
+    # Closes the connection, removing the consumers.
+    def stop!
+      connection.close
+      @connection = nil
+    end
+
     # Signals that an uncaught error has occurred and the process should be stopped.
     #
     # @param [Exception] error The unhandled error that occurred.

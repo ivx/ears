@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 (2023-05-16)
+
+- Add Ears.stop! method to be able to close the connection and remove consumers.
+
 ## 0.9.3 (2023-03-02)
 
 - Update gem ownership information

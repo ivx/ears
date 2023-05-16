@@ -202,6 +202,18 @@ end
 
 This will automatically route messages to `my_queue.error` after they have been re-tried three times. This prevents you from infinitely retrying a faulty message.
 
+### Stopping any running consumers
+
+When you are running Ears in a non-blocking way (e.g. in a Thread), it might be cumbersome to remove the running consumers without restarting the whole app.
+
+For this use case, there is a stop! method:
+
+```ruby
+Ears.stop!
+```
+
+It will close and reset the current Bunny connection, leading to all consumers being shut down.
+
 ## Documentation
 
 If you need more in-depth information, look at [our API documentation](https://www.rubydoc.info/gems/ears).
