@@ -191,5 +191,16 @@ RSpec.describe Ears do
 
       expect(Bunny).to have_received(:new).twice
     end
+
+    it 'resets the channel' do
+      Ears.channel
+
+      Ears.stop!
+
+      Ears.channel
+      Ears.channel
+
+      expect(bunny).to have_received(:create_channel).twice
+    end
   end
 end

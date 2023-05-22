@@ -62,6 +62,7 @@ module Ears
     def stop!
       connection.close
       @connection = nil
+      Thread.current[:ears_channel] = nil
     end
 
     # Signals that an uncaught error has occurred and the process should be stopped.
