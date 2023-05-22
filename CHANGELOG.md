@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1 (2023-05-22)
+
+- Reset channel on Ears.stop!
+
 ## 0.10.0 (2023-05-16)
 
 - Add Ears.stop! method to be able to close the connection and remove consumers.

@@ -212,7 +212,7 @@ For this use case, there is a stop! method:
 Ears.stop!
 ```
 
-It will close and reset the current Bunny connection, leading to all consumers being shut down.
+It will close and reset the current Bunny connection, leading to all consumers being shut down. Also, it will reset the channel.
 
 ## Documentation
 
