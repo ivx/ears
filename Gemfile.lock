@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ears (0.10.1)
+    ears (0.11.0)
       bunny
       multi_json
 
