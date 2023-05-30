@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0 (2023-05-30)
+
+- _Breaking change:_Provide the Bunny connection option `recovery_attempts` in Ears configuration.
+  It comes with a default of 10 attempts. 
+
 ## 0.10.1 (2023-05-22)
 
 - Reset channel on Ears.stop!
