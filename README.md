@@ -2,6 +2,8 @@
 
 `Ears` is a small, simple library for writing RabbitMQ consumers.
 
+[![CodeQL](https://github.com/ivx/ears/actions/workflows/codeql.yml/badge.svg)](https://github.com/ivx/ears/actions/workflows/codeql.yml)
+
 ## Installation
 
 Add this line to your application's Gemfile:
