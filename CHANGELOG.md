@@ -2,8 +2,9 @@
 
 ## 0.11.0 (2023-05-30)
 
-- **[Breaking]**: Provide the Bunny connection option `recovery_attempts` in Ears configuration.
-  It comes with a default of 10 attempts.
+- **[Breaking]**: Provide the Bunny connection option `recovery_attempts` in Ears configuration. It
+  comes with a default of 10 attempts. When the number of recovery attempts are exhausted, Ears will
+  rise a `MaxRecoveryAttemptsExhaustedError`.
 
 ## 0.10.1 (2023-05-22)
 
