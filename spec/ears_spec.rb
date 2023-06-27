@@ -53,20 +53,26 @@ RSpec.describe Ears do
       end
 
       it 'connects with default config parameters when it is accessed' do
-        expect(Bunny).to receive(:new).with(
+        Ears.connection
+
+        expect(Bunny).to have_received(:new).with(
           rabbitmq_url,
           connection_name: connection_name,
           recovery_attempts: 10,
-        )
-        expect(bunny).to receive(:start)
-
-        Ears.connection
+          recovery_attempts_exhausted: anything,
+        ) do |_args, kwargs|
+          proc = kwargs[:recovery_attempts_exhausted]
+          expect { proc.call }.to raise_error(
+            Ears::MaxRecoveryAttemptsExhaustedError,
+          )
+        end
+        expect(bunny).to have_received(:start)
       end
     end
 
     context 'with more options' do
       let(:recover_from_connection_close) { false }
-      let(:recovery_attempts) { 5 }
+      let(:recovery_attempts) { nil }
 
       before do
         Ears.configure do |config|
@@ -78,15 +84,14 @@ RSpec.describe Ears do
       end
 
       it 'connects with config parameters when it is accessed' do
-        expect(Bunny).to receive(:new).with(
+        Ears.connection
+
+        expect(Bunny).to have_received(:new).with(
           rabbitmq_url,
           connection_name: connection_name,
           recover_from_connection_close: recover_from_connection_close,
-          recovery_attempts: recovery_attempts,
         )
-        expect(bunny).to receive(:start)
-
-        Ears.connection
+        expect(bunny).to have_received(:start)
       end
     end
   end

@@ -1,3 +1,5 @@
+require 'ears/errors'
+
 module Ears
   # The class representing the global {Ears} configuration.
   class Configuration
@@ -22,6 +24,13 @@ module Ears
     def initialize
       @rabbitmq_url = DEFAULT_RABBITMQ_URL
       @recovery_attempts = DEFAULT_RECOVERY_ATTEMPTS
+    end
+
+    # @return [Proc] that is passed to Bunny’s recovery_attempts_exhausted block. Nil if recovery_attempts is nil.
+    def recovery_attempts_exhausted
+      return nil unless recovery_attempts
+
+      Proc.new { raise MaxRecoveryAttemptsExhaustedError }
     end
 
     def validate!
