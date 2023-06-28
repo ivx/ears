@@ -30,7 +30,13 @@ module Ears
     def recovery_attempts_exhausted
       return nil unless recovery_attempts
 
-      Proc.new { raise MaxRecoveryAttemptsExhaustedError }
+      Proc.new do
+        # We need to have this since Bunny’s multi-threading is cumbersome here.
+        # Session reconnection seems not to be done in the main thread. If we want to
+        # achieve a restart of the app we need to modify the thread behaviour.
+        Thread.current.abort_on_exception = true
+        raise MaxRecoveryAttemptsExhaustedError
+      end
     end
 
     def validate!
