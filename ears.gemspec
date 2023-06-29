@@ -38,6 +38,6 @@ You may want to have a look into the CHANGELOG!
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'bunny'
+  spec.add_dependency 'bunny', '~> 2.22.0'
   spec.add_dependency 'multi_json'
 end

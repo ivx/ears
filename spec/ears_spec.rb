@@ -43,39 +43,56 @@ RSpec.describe Ears do
   describe '.connection' do
     let(:rabbitmq_url) { 'amqp://lol:lol@kek.com:15672' }
     let(:connection_name) { 'my connection' }
-    let(:recover_from_connection_close) { false }
 
-    before do
-      Ears.configure do |config|
-        config.rabbitmq_url = rabbitmq_url
-        config.connection_name = connection_name
-        config.recover_from_connection_close = recover_from_connection_close
+    context 'when only mandatory options are set' do
+      before do
+        Ears.configure do |config|
+          config.rabbitmq_url = rabbitmq_url
+          config.connection_name = connection_name
+        end
       end
-    end
 
-    context 'when recover_from_connection_close is set' do
-      let(:recover_from_connection_close) { nil }
+      it 'connects with default config parameters when it is accessed' do
+        Ears.connection
 
-      it 'connects with config parameters when it is accessed' do
-        expect(Bunny).to receive(:new).with(
+        expect(Bunny).to have_received(:new).with(
           rabbitmq_url,
           connection_name: connection_name,
-        )
-        expect(bunny).to receive(:start)
-
-        Ears.connection
+          recovery_attempts: 10,
+          recovery_attempts_exhausted: anything,
+        ) do |_args, kwargs|
+          proc = kwargs[:recovery_attempts_exhausted]
+          expect { proc.call }.to raise_error(
+            Ears::MaxRecoveryAttemptsExhaustedError,
+          )
+        end
+        expect(bunny).to have_received(:start)
       end
     end
 
-    it 'connects with config parameters when it is accessed' do
-      expect(Bunny).to receive(:new).with(
-        rabbitmq_url,
-        connection_name: connection_name,
-        recover_from_connection_close: recover_from_connection_close,
-      )
-      expect(bunny).to receive(:start)
+    context 'with more options' do
+      let(:recover_from_connection_close) { false }
+      let(:recovery_attempts) { nil }
 
-      Ears.connection
+      before do
+        Ears.configure do |config|
+          config.rabbitmq_url = rabbitmq_url
+          config.connection_name = connection_name
+          config.recover_from_connection_close = recover_from_connection_close
+          config.recovery_attempts = recovery_attempts
+        end
+      end
+
+      it 'connects with config parameters when it is accessed' do
+        Ears.connection
+
+        expect(Bunny).to have_received(:new).with(
+          rabbitmq_url,
+          connection_name: connection_name,
+          recover_from_connection_close: recover_from_connection_close,
+        )
+        expect(bunny).to have_received(:start)
+      end
     end
   end
 

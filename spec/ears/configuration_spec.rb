@@ -27,6 +27,36 @@ RSpec.describe Ears::Configuration do
     expect(configuration.recover_from_connection_close).to be(false)
   end
 
+  it 'allows setting the recovery_attempts' do
+    configuration.recovery_attempts = 2
+
+    expect(configuration.recovery_attempts).to eq(2)
+  end
+
+  it 'has a default recovery_attempt' do
+    expect(configuration.recovery_attempts).to eq(10)
+  end
+
+  context 'when recovery attempts are set' do
+    before { configuration.recovery_attempts = 2 }
+
+    it 'sets recovery_attempts_exhausted to a raising proc' do
+      proc = configuration.recovery_attempts_exhausted
+
+      expect { proc.call }.to raise_error(
+        Ears::MaxRecoveryAttemptsExhaustedError,
+      )
+    end
+  end
+
+  context 'when recovery attempts are set to nil' do
+    before { configuration.recovery_attempts = nil }
+
+    it 'sets also recovery_attempts_exhausted to nil' do
+      expect(configuration.recovery_attempts).to be_nil
+    end
+  end
+
   describe '#validate!' do
     it 'returns nil on valid configuration' do
       configuration.connection_name = 'test'

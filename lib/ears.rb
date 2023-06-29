@@ -87,6 +87,8 @@ module Ears
         connection_name: configuration.connection_name,
         recover_from_connection_close:
           configuration.recover_from_connection_close,
+        recovery_attempts: configuration.recovery_attempts,
+        recovery_attempts_exhausted: configuration.recovery_attempts_exhausted,
       }.compact
     end
   end
