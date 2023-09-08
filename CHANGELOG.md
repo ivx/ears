@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1 (2023-09-08)
+
+- Bugfix: trapped signals INT and TERM now calls correctly previous set signal handler
+
 ## 0.11.0 (2023-05-30)
 
 - **[Breaking]**: Provide the Bunny connection option `recovery_attempts` in Ears configuration. It
