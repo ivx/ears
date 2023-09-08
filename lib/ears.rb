@@ -52,8 +52,14 @@ module Ears
     # Used to keep the process alive while processing messages.
     def run!
       running = true
-      Signal.trap('INT') { running = false }
-      Signal.trap('TERM') { running = false }
+      @@previous_int_trap = Signal.trap('INT') do
+        running = false
+        @@previous_int_trap&.call unless @@previous_int_trap == 'DEFAULT'
+      end
+      @@previous_term_trap = Signal.trap('TERM') do
+        running = false
+        @@previous_term_trap&.call unless @@previous_term_trap == 'DEFAULT'
+      end
       sleep 1 while running && @error.nil?
       raise @error if @error
     end
