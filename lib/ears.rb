@@ -51,16 +51,9 @@ module Ears
     # Blocks the calling thread until +SIGTERM+ or +SIGINT+ is received.
     # Used to keep the process alive while processing messages.
     def run!
-      running = true
-      @@previous_int_trap = Signal.trap('INT') do
-        running = false
-        @@previous_int_trap&.call unless @@previous_int_trap == 'DEFAULT'
-      end
-      @@previous_term_trap = Signal.trap('TERM') do
-        running = false
-        @@previous_term_trap&.call unless @@previous_term_trap == 'DEFAULT'
-      end
-      sleep 1 while running && @error.nil?
+      @running = true
+      setup_traps
+      sleep 1 while @running && @error.nil?
       raise @error if @error
     end
 
@@ -87,6 +80,19 @@ module Ears
     end
 
     private
+
+    def setup_traps
+      @previous_int_trap =
+        Signal.trap('INT') do
+          @running = false
+          @previous_int_trap&.call unless @previous_int_trap == 'DEFAULT'
+        end
+      @previous_term_trap =
+        Signal.trap('TERM') do
+          @running = false
+          @previous_term_trap&.call unless @previous_term_trap == 'DEFAULT'
+        end
+    end
 
     def connection_config
       {
