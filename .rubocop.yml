@@ -64,7 +64,9 @@ Metrics/ModuleLength:
     - 'spec/**/*.rb'
     - 'test/**/*.rb'
 
-require: rubocop-rspec
+require:
+  - rubocop-rspec
+  - rubocop-rake
 
 RSpec/DescribedClass:
   Enabled: false

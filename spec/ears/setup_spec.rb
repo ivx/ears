@@ -8,9 +8,8 @@ RSpec.describe Ears::Setup do
   let(:queue) { instance_double(Bunny::Queue, name: 'queue', options: {}) }
 
   before do
-    allow(Ears).to receive(:connection).and_return(connection)
     allow(connection).to receive(:create_channel).and_return(channel)
-    allow(Ears).to receive(:channel).and_return(channel)
+    allow(Ears).to receive_messages(connection: connection, channel: channel)
     allow(channel).to receive(:prefetch)
     allow(channel).to receive(:on_uncaught_exception)
     allow(Bunny::Queue).to receive(:new).and_return(queue)

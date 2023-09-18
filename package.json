@@ -7,9 +7,9 @@
     "format": "npm run prettify -- --write"
   },
   "devDependencies": {
-    "@invisionag/prettier-config": "^2.1.1",
-    "@prettier/plugin-ruby": "^3.2.2",
-    "prettier": "^2.8.8"
+    "@invisionag/prettier-config": "^2.1.2",
+    "@prettier/plugin-ruby": "^4.0.2",
+    "prettier": "^3.0.3"
   },
   "prettier": "@invisionag/prettier-config/ruby"
 }
