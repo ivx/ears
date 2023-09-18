@@ -12,8 +12,7 @@ RSpec.describe Ears::Consumer do
   let(:payload) { 'my payload' }
 
   before do
-    allow(channel).to receive(:generate_consumer_tag).and_return('test')
-    allow(channel).to receive(:number).and_return(1)
+    allow(channel).to receive_messages(generate_consumer_tag: 'test', number: 1)
     allow(channel).to receive(:ack).with(delivery_tag, false)
   end
 
