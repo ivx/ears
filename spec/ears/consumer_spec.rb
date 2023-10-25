@@ -57,7 +57,7 @@ RSpec.describe Ears::Consumer do
       it 'provides a default for durable_exchange' do
         custom_consumer_class.configure(mandatory_options)
 
-        expect(custom_consumer_class.durable_exchange).to eq(true)
+        expect(custom_consumer_class.durable_exchange).to be(true)
       end
 
       it 'provides a default for exchange_type' do
@@ -119,7 +119,7 @@ RSpec.describe Ears::Consumer do
           mandatory_options.merge({ durable_exchange: false }),
         )
 
-        expect(custom_consumer_class.durable_exchange).to eq(false)
+        expect(custom_consumer_class.durable_exchange).to be(false)
       end
     end
 

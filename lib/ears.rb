@@ -47,6 +47,11 @@ module Ears
       Ears::Setup.new.instance_eval(&block)
     end
 
+    # Quick setup your consumers (including exchanges and queues).
+    def setup_consumers(*consumer_classes)
+      Ears::Setup.new.setup_consumers(*consumer_classes)
+    end
+
     # Blocks the calling thread until +SIGTERM+ or +SIGINT+ is received.
     # Used to keep the process alive while processing messages.
     def run!
