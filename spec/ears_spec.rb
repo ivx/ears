@@ -1,21 +1,11 @@
 # frozen_string_literal: true
 
 RSpec.describe Ears do
-  # let(:bunny) { instance_double(Bunny::Session) }
-  # let(:channel) { instance_double(Bunny::Channel) }
-
-  # before do
-  #   Ears.reset!
-  #   allow(Bunny).to receive(:new).and_return(bunny)
-  #   allow(bunny).to receive(:start)
-  #   allow(bunny).to receive(:create_channel).and_return(channel)
-  #   allow(channel).to receive(:prefetch).with(1)
-  #   allow(channel).to receive(:on_uncaught_exception)
-  # end
+  before { Ears.reset! }
 
   it 'has a version number' do
     expect(Ears::VERSION).to match(
-      /\A[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\z/
+      /\A[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\z/,
     )
   end
 
@@ -24,8 +14,6 @@ RSpec.describe Ears do
   end
 
   describe '.configure' do
-    before { Ears.reset! }
-
     it 'allows setting the configuration values' do
       Ears.configure do |config|
         config.rabbitmq_url = 'amqp://guest:guest@test.local:5672'
@@ -38,7 +26,7 @@ RSpec.describe Ears do
         rabbitmq_url: 'amqp://guest:guest@test.local:5672',
         connection_name: 'conn_name',
         recover_from_connection_close: true,
-        recovery_attempts: 666
+        recovery_attempts: 666,
       )
     end
 
@@ -62,7 +50,6 @@ RSpec.describe Ears do
     context 'with mandatory configuration' do
       before do
         allow(Bunny).to receive(:new).and_return(bunny_session)
-        Ears.reset!
         Ears.configure { |config| config.connection_name = 'here_we_go' }
         Ears.connection
       end
@@ -72,7 +59,7 @@ RSpec.describe Ears do
           'amqp://guest:guest@localhost:5672',
           connection_name: 'here_we_go',
           recovery_attempts: 10,
-          recovery_attempts_exhausted: anything
+          recovery_attempts_exhausted: anything,
         )
       end
 
@@ -84,7 +71,6 @@ RSpec.describe Ears do
     context 'with custom configration' do
       before do
         allow(Bunny).to receive(:new).and_return(bunny_session)
-        Ears.reset!
         Ears.configure do |config|
           config.rabbitmq_url = 'amqp://lol:lol@kek.com:15672'
           config.connection_name = 'here_we_go'
@@ -100,7 +86,7 @@ RSpec.describe Ears do
           connection_name: 'here_we_go',
           recover_from_connection_close: false,
           recovery_attempts: 9,
-          recovery_attempts_exhausted: anything
+          recovery_attempts_exhausted: anything,
         )
       end
 
@@ -129,7 +115,7 @@ RSpec.describe Ears do
     end
 
     it 'configures the channel prefetch' do
-      expect(bunny_session).to have_received(:prefetch).with(1)
+      expect(bunny_channel).to have_received(:prefetch).with(1)
     end
 
     it 'configures the channel exception handler' do
@@ -155,7 +141,7 @@ RSpec.describe Ears do
         Bunny::Session,
         start: nil,
         create_channel: bunny_channel,
-        close: nil
+        close: nil,
       )
     end
 
