@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.2 (2023-10-25)
+
+- Add documentation generation via yard
+
 ## 0.11.1 (2023-09-08)
 
 - Bugfix: trapped signals INT and TERM now calls correctly previous set signal handler
