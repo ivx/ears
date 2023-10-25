@@ -7,7 +7,7 @@ SimpleCov.start do
 end
 if RSpec.configuration.files_to_run.length > 1
   # Let's increase this later on
-  SimpleCov.minimum_coverage line: 97, branch: 65
+  SimpleCov.minimum_coverage line: 97.5, branch: 65.7
 end
 
 RSpec.configure do |config|
