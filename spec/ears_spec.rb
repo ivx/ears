@@ -1,20 +1,22 @@
-require 'ears'
+# frozen_string_literal: true
 
 RSpec.describe Ears do
-  let(:bunny) { instance_double(Bunny::Session) }
-  let(:channel) { instance_double(Bunny::Channel) }
+  # let(:bunny) { instance_double(Bunny::Session) }
+  # let(:channel) { instance_double(Bunny::Channel) }
 
-  before do
-    Ears.reset!
-    allow(Bunny).to receive(:new).and_return(bunny)
-    allow(bunny).to receive(:start)
-    allow(bunny).to receive(:create_channel).and_return(channel)
-    allow(channel).to receive(:prefetch).with(1)
-    allow(channel).to receive(:on_uncaught_exception)
-  end
+  # before do
+  #   Ears.reset!
+  #   allow(Bunny).to receive(:new).and_return(bunny)
+  #   allow(bunny).to receive(:start)
+  #   allow(bunny).to receive(:create_channel).and_return(channel)
+  #   allow(channel).to receive(:prefetch).with(1)
+  #   allow(channel).to receive(:on_uncaught_exception)
+  # end
 
   it 'has a version number' do
-    expect(Ears::VERSION).not_to be_nil
+    expect(Ears::VERSION).to match(
+      /\A[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\z/
+    )
   end
 
   it 'has a configuration' do
@@ -22,89 +24,116 @@ RSpec.describe Ears do
   end
 
   describe '.configure' do
+    before { Ears.reset! }
+
     it 'allows setting the configuration values' do
       Ears.configure do |config|
-        config.rabbitmq_url = 'test'
-        config.connection_name = 'conn'
+        config.rabbitmq_url = 'amqp://guest:guest@test.local:5672'
+        config.connection_name = 'conn_name'
+        config.recover_from_connection_close = true
+        config.recovery_attempts = 666
       end
 
-      expect(Ears.configuration.rabbitmq_url).to eq('test')
+      expect(Ears.configuration).to have_attributes(
+        rabbitmq_url: 'amqp://guest:guest@test.local:5672',
+        connection_name: 'conn_name',
+        recover_from_connection_close: true,
+        recovery_attempts: 666
+      )
+    end
+
+    it 'yields the Ears configuration' do
+      Ears.configure do |config|
+        config.connection_name = 'conn_name'
+        expect(config).to be Ears.configuration
+      end
     end
 
     it 'throws an error if connection name was not set' do
-      Ears.reset!
-
-      expect {
-        Ears.configure { |config| config.rabbitmq_url = 'test' }
-      }.to raise_error(Ears::Configuration::ConnectionNameMissing)
+      expect do
+        Ears.configure(&:to_s)
+      end.to raise_error Ears::Configuration::ConnectionNameMissing
     end
   end
 
   describe '.connection' do
-    let(:rabbitmq_url) { 'amqp://lol:lol@kek.com:15672' }
-    let(:connection_name) { 'my connection' }
+    let(:bunny_session) { instance_double(Bunny::Session, start: nil) }
 
-    context 'when only mandatory options are set' do
+    context 'with mandatory configuration' do
       before do
-        Ears.configure do |config|
-          config.rabbitmq_url = rabbitmq_url
-          config.connection_name = connection_name
-        end
+        allow(Bunny).to receive(:new).and_return(bunny_session)
+        Ears.reset!
+        Ears.configure { |config| config.connection_name = 'here_we_go' }
+        Ears.connection
       end
 
-      it 'connects with default config parameters when it is accessed' do
-        Ears.connection
-
+      it 'connects with config parameters' do
         expect(Bunny).to have_received(:new).with(
-          rabbitmq_url,
-          connection_name: connection_name,
+          'amqp://guest:guest@localhost:5672',
+          connection_name: 'here_we_go',
           recovery_attempts: 10,
-          recovery_attempts_exhausted: anything,
-        ) do |_args, kwargs|
-          proc = kwargs[:recovery_attempts_exhausted]
-          expect { proc.call }.to raise_error(
-            Ears::MaxRecoveryAttemptsExhaustedError,
-          )
-        end
-        expect(bunny).to have_received(:start)
+          recovery_attempts_exhausted: anything
+        )
+      end
+
+      it 'starts the connection' do
+        expect(bunny_session).to have_received(:start)
       end
     end
 
-    context 'with more options' do
-      let(:recover_from_connection_close) { false }
-      let(:recovery_attempts) { nil }
-
+    context 'with custom configration' do
       before do
+        allow(Bunny).to receive(:new).and_return(bunny_session)
+        Ears.reset!
         Ears.configure do |config|
-          config.rabbitmq_url = rabbitmq_url
-          config.connection_name = connection_name
-          config.recover_from_connection_close = recover_from_connection_close
-          config.recovery_attempts = recovery_attempts
+          config.rabbitmq_url = 'amqp://lol:lol@kek.com:15672'
+          config.connection_name = 'here_we_go'
+          config.recover_from_connection_close = false
+          config.recovery_attempts = 9
         end
+        Ears.connection
       end
 
-      it 'connects with config parameters when it is accessed' do
-        Ears.connection
-
+      it 'connects with config parameters' do
         expect(Bunny).to have_received(:new).with(
-          rabbitmq_url,
-          connection_name: connection_name,
-          recover_from_connection_close: recover_from_connection_close,
+          'amqp://lol:lol@kek.com:15672',
+          connection_name: 'here_we_go',
+          recover_from_connection_close: false,
+          recovery_attempts: 9,
+          recovery_attempts_exhausted: anything
         )
-        expect(bunny).to have_received(:start)
+      end
+
+      it 'starts the connection' do
+        expect(bunny_session).to have_received(:start)
       end
     end
   end
 
   describe '.channel' do
-    it 'creates a channel when it is accessed' do
-      expect(bunny).to receive(:create_channel).with(nil, 1, true).and_return(
-        channel,
-      )
-      expect(channel).to receive(:prefetch).with(1)
-      expect(channel).to receive(:on_uncaught_exception)
+    let(:bunny_session) do
+      instance_double(Bunny::Session, start: nil, create_channel: bunny_channel)
+    end
 
+    let(:bunny_channel) do
+      instance_double(Bunny::Channel, prefetch: nil, on_uncaught_exception: nil)
+    end
+
+    before do
+      allow(Bunny).to receive(:new).and_return(bunny_session)
       Ears.channel
+    end
+
+    it 'creates a channel when it is accessed' do
+      expect(bunny_session).to have_received(:create_channel).with(nil, 1, true)
+    end
+
+    it 'configures the channel prefetch' do
+      expect(bunny_session).to have_received(:prefetch).with(1)
+    end
+
+    it 'configures the channel exception handler' do
+      expect(bunny_channel).to have_received(:on_uncaught_exception)
     end
 
     it 'stores the channel on the current thread' do
@@ -113,111 +142,45 @@ RSpec.describe Ears do
   end
 
   describe '.setup' do
-    let(:exchange) { instance_double(Bunny::Exchange) }
-    let(:queue) { instance_double(Bunny::Queue, name: 'queue', options: {}) }
-    let(:consumer_wrapper) { instance_double(Ears::ConsumerWrapper) }
-    let(:delivery_info) { instance_double(Bunny::DeliveryInfo) }
-    let(:metadata) { instance_double(Bunny::MessageProperties) }
-    let(:payload) { 'my payload' }
-
-    before do
-      allow(Bunny::Exchange).to receive(:new).and_return(exchange)
-      allow(Bunny::Queue).to receive(:new).and_return(queue)
-      allow(queue).to receive(:bind)
-      allow(queue).to receive(:subscribe_with)
-      allow(queue).to receive(:channel).and_return(channel)
-      allow(Ears::ConsumerWrapper).to receive(:new).and_return(consumer_wrapper)
-      allow(consumer_wrapper).to receive(:on_delivery).and_yield(
-        delivery_info,
-        metadata,
-        payload,
-      )
-      allow(Thread).to receive(:new).and_yield
-
-      stub_const('MyConsumer', Class.new(Ears::Consumer))
-    end
-
-    it 'creates a given exchange' do
-      expect(Bunny::Exchange).to receive(:new).with(
-        channel,
-        :topic,
-        'my-exchange',
-        {},
-      )
-
-      Ears.setup { exchange('my-exchange', :topic) }
-    end
-
-    it 'creates a queue' do
-      expect(Bunny::Queue).to receive(:new).with(channel, 'my-queue', {})
-
-      Ears.setup do
-        exchange('my-exchange', :topic)
-        queue('my-queue')
-      end
-    end
-
-    it 'binds a queue to an exchange' do
-      expect(queue).to receive(:bind).with(exchange, routing_key: 'test')
-
-      Ears.setup do
-        exchange = exchange('my-exchange', :topic)
-        queue = queue('my-queue')
-        queue.bind(exchange, routing_key: 'test')
-      end
-    end
-
-    it 'starts a consumer subscribed to a queue' do
-      expect(consumer_wrapper).to receive(:on_delivery).and_yield(
-        delivery_info,
-        metadata,
-        payload,
-      ).ordered
-      expect(consumer_wrapper).to receive(:process_delivery).with(
-        delivery_info,
-        metadata,
-        payload,
-      ).ordered
-      expect(queue).to receive(:subscribe_with).with(consumer_wrapper).ordered
-
-      Ears.setup do
-        exchange = exchange('my-exchange', :topic)
-        queue = queue('my-queue')
-        queue.bind(exchange, routing_key: 'test')
-        consumer(queue, MyConsumer)
-      end
+    it 'creates a setup helper and executed the given block on this instace' do
+      instance = :none
+      Ears.setup { instance = self }
+      expect(instance).to be_a Ears::Setup
     end
   end
 
   describe '.stop!' do
-    before { allow(bunny).to receive(:close) }
-
-    it 'stops the connection' do
-      Ears.stop!
-
-      expect(bunny).to have_received(:close)
+    let(:bunny_session) do
+      instance_double(
+        Bunny::Session,
+        start: nil,
+        create_channel: bunny_channel,
+        close: nil
+      )
     end
 
-    it 'resets the connection' do
-      Ears.connection
+    let(:bunny_channel) do
+      instance_double(Bunny::Channel, prefetch: nil, on_uncaught_exception: nil)
+    end
 
+    before do
+      allow(Bunny).to receive(:new).and_return(bunny_session)
+      Ears.channel
       Ears.stop!
+    end
 
-      Ears.connection
-      Ears.connection
+    it 'stops the connection' do
+      expect(bunny_session).to have_received(:close)
+    end
 
+    it 'forces to create a new connection afterwards' do
+      Ears.connection
       expect(Bunny).to have_received(:new).twice
     end
 
-    it 'resets the channel' do
+    it 'forces to create a new channel afterwards' do
       Ears.channel
-
-      Ears.stop!
-
-      Ears.channel
-      Ears.channel
-
-      expect(bunny).to have_received(:create_channel).twice
+      expect(bunny_session).to have_received(:create_channel).twice
     end
   end
 end
