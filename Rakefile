@@ -7,6 +7,7 @@ require 'yard'
 
 CLEAN << '.yardoc'
 CLOBBER << 'doc'
+CLOBBER << 'coverage'
 
 RSpec::Core::RakeTask.new(:spec)
 YARD::Rake::YardocTask.new { |t| t.stats_options = %w[--list-undoc] }

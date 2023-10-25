@@ -2,13 +2,13 @@ source 'https://rubygems.org'
 
 gemspec
 
-group :development, :test do
-  gem 'prettier'
+group :test do
+  gem 'prettier', require: false
   gem 'rake'
-  gem 'redcarpet'
   gem 'rspec'
-  gem 'rubocop'
-  gem 'rubocop-rake'
-  gem 'rubocop-rspec'
-  gem 'yard'
+  gem 'rubocop', require: false
+  gem 'rubocop-rake', require: false
+  gem 'rubocop-rspec', require: false
+  gem 'simplecov'
+  gem 'yard', require: false
 end
