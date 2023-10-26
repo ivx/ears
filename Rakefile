@@ -19,6 +19,6 @@ RuboCop::RakeTask.new(:rubocop) do |task|
 end
 
 desc 'Run Prettier'
-task(:prettier) { system('npm run lint') }
+task(:prettier) { sh 'npm run lint' }
 
 task default: %i[spec rubocop prettier]

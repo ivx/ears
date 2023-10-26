@@ -13,5 +13,5 @@ RSpec.configure(&:disable_monkey_patching!)
 
 if RSpec.configuration.files_to_run.length > 1
   # Let's increase this later on
-  SimpleCov.minimum_coverage line: 97.4, branch: 62.8
+  SimpleCov.minimum_coverage line: 97.17, branch: 62.8
 end

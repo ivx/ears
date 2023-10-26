@@ -1,289 +1,211 @@
-require 'ears'
-require 'ears/setup'
+# frozen_string_literal: true
 
 RSpec.describe Ears::Setup do
-  let(:connection) { instance_double(Bunny::Session) }
-  let(:channel) { instance_double(Bunny::Channel, number: 1) }
-  let(:exchange) { instance_double(Bunny::Exchange) }
-  let(:queue) { instance_double(Bunny::Queue, name: 'queue', options: {}) }
+  subject(:setup) { Ears::Setup.new }
 
-  before do
-    allow(connection).to receive(:create_channel).and_return(channel)
-    allow(Ears).to receive_messages(connection: connection, channel: channel)
-    allow(channel).to receive(:prefetch)
-    allow(channel).to receive(:on_uncaught_exception)
-    allow(Bunny::Queue).to receive(:new).and_return(queue)
-    allow(queue).to receive(:channel).and_return(channel)
-  end
+  let(:ears_channel) { instance_double(Bunny::Channel) }
+
+  before { allow(Ears).to receive(:channel).and_return(ears_channel) }
 
   describe '#exchange' do
-    it 'creates a new bunny exchange with the given options' do
+    it 'creates a new Bunny exchange with the given options' do
       expect(Bunny::Exchange).to receive(:new).with(
-        channel,
-        :topic,
-        'name',
-        {},
-      ).and_return(exchange)
-
-      expect(Ears::Setup.new.exchange('name', :topic)).to eq(exchange)
-    end
-
-    it 'passes the given options to the exchange' do
-      expect(Bunny::Exchange).to receive(:new).with(
-        channel,
-        :topic,
-        'name',
-        { test: 1 },
-      ).and_return(exchange)
-
-      expect(Ears::Setup.new.exchange('name', :topic, { test: 1 })).to eq(
-        exchange,
+        ears_channel,
+        :type,
+        :name,
+        :some_options,
       )
+
+      setup.exchange(:name, :type, :some_options)
     end
   end
 
   describe '#queue' do
-    it 'creates a new bunny queue with the given options' do
+    it 'creates the Bunny queue' do
       expect(Bunny::Queue).to receive(:new).with(
-        channel,
-        'name',
-        {},
-      ).and_return(queue)
+        ears_channel,
+        'aName',
+        {
+          custom_argument: :forwared,
+          arguments: {
+            'x-custom-argument' => 'forwarded',
+          },
+        },
+      )
 
-      expect(Ears::Setup.new.queue('name')).to eq(queue)
+      setup.queue(
+        'aName',
+        custom_argument: :forwared,
+        arguments: { 'x-custom-argument' => 'forwarded' }.freeze,
+      )
     end
 
-    it 'passes the given options to the queue' do
+    it 'creates optionally a related retry queue' do
       expect(Bunny::Queue).to receive(:new).with(
-        channel,
-        'name',
-        { test: 1 },
-      ).and_return(queue)
+        ears_channel,
+        'aName',
+        {
+          custom_argument: :forwared,
+          arguments: {
+            'x-dead-letter-exchange' => '',
+            'x-dead-letter-routing-key' => 'aName.retry',
+            'x-custom-argument' => 'forwarded',
+          },
+        },
+      )
 
-      expect(Ears::Setup.new.queue('name', { test: 1 })).to eq(queue)
+      expect(Bunny::Queue).to receive(:new).with(
+        ears_channel,
+        'aName.retry',
+        {
+          custom_argument: :forwared,
+          arguments: {
+            'x-dead-letter-exchange' => '',
+            'x-dead-letter-routing-key' => 'aName',
+            'x-message-ttl' => 311,
+          },
+        },
+      )
+
+      setup.queue(
+        'aName',
+        retry_queue: true,
+        retry_delay: 311,
+        custom_argument: :forwared,
+        arguments: { 'x-custom-argument' => 'forwarded' }.freeze,
+      )
     end
 
-    context 'with retry queue' do
-      it 'does not pass on options that are processed by ears' do
-        expect(Bunny::Queue).to receive(:new).with(
-          channel,
-          'name',
-          {
-            test: 1,
-            arguments: {
-              'x-dead-letter-exchange' => '',
-              'x-dead-letter-routing-key' => 'name.retry',
-            },
+    it 'creates optionally a related error queue' do
+      expect(Bunny::Queue).to receive(:new).with(
+        ears_channel,
+        'aName',
+        {
+          custom_argument: :forwared,
+          arguments: {
+            'x-custom-argument' => 'forwarded',
           },
-        ).and_return(queue)
+        },
+      )
 
-        expect(
-          Ears::Setup.new.queue(
-            'name',
-            { retry_queue: true, retry_delay: 1000, test: 1 },
-          ),
-        ).to eq(queue)
-      end
-
-      it 'creates a retry queue with a derived name' do
-        expect(Bunny::Queue).to receive(:new).with(
-          channel,
-          'name.retry',
-          {
-            arguments: {
-              'x-message-ttl' => 5000,
-              'x-dead-letter-exchange' => '',
-              'x-dead-letter-routing-key' => 'name',
-            },
+      expect(Bunny::Queue).to receive(:new).with(
+        ears_channel,
+        'aName.error',
+        {
+          custom_argument: :forwared,
+          arguments: {
+            'x-custom-argument' => 'forwarded',
           },
-        )
+        },
+      )
 
-        expect(Ears::Setup.new.queue('name', retry_queue: true)).to eq(queue)
-      end
-
-      it 'adds the retry queue as a deadletter to the original queue' do
-        expect(Bunny::Queue).to receive(:new).with(
-          channel,
-          'name',
-          {
-            arguments: {
-              'x-dead-letter-exchange' => '',
-              'x-dead-letter-routing-key' => 'name.retry',
-            },
-          },
-        )
-
-        expect(Ears::Setup.new.queue('name', retry_queue: true)).to eq(queue)
-      end
-
-      it 'uses the given retry delay for the retry queue' do
-        expect(Bunny::Queue).to receive(:new).with(
-          channel,
-          'name.retry',
-          {
-            arguments: {
-              'x-message-ttl' => 1000,
-              'x-dead-letter-exchange' => '',
-              'x-dead-letter-routing-key' => 'name',
-            },
-          },
-        )
-
-        expect(
-          Ears::Setup.new.queue('name', retry_queue: true, retry_delay: 1000),
-        ).to eq(queue)
-      end
-
-      it 'merges retry options into the arguments' do
-        expect(Bunny::Queue).to receive(:new).with(
-          channel,
-          'name',
-          {
-            arguments: {
-              'x-max-length-bytes' => 1_048_576,
-              'x-overflow' => 'reject-publish',
-              'x-dead-letter-exchange' => '',
-              'x-dead-letter-routing-key' => 'name.retry',
-            },
-          },
-        ).and_return(queue)
-
-        expect(
-          Ears::Setup.new.queue(
-            'name',
-            {
-              retry_queue: true,
-              retry_delay: 1000,
-              arguments: {
-                'x-max-length-bytes' => 1_048_576,
-                'x-overflow' => 'reject-publish',
-              },
-            },
-          ),
-        ).to eq(queue)
-      end
-    end
-
-    context 'with error queue' do
-      it 'creates an error queue with derived name if option is set' do
-        expect(Bunny::Queue).to receive(:new).with(channel, 'name.error', {})
-
-        expect(Ears::Setup.new.queue('name', error_queue: true)).to eq(queue)
-      end
+      setup.queue(
+        'aName',
+        error_queue: true,
+        custom_argument: :forwared,
+        arguments: { 'x-custom-argument' => 'forwarded' }.freeze,
+      )
     end
   end
 
   describe '#consumer' do
-    let(:consumer_class) { Class.new(Ears::Consumer) }
-    let(:consumer_instance) { instance_double(consumer_class) }
-    let(:consumer_wrapper) { instance_double(Ears::ConsumerWrapper) }
-    let(:delivery_info) { instance_double(Bunny::DeliveryInfo) }
-    let(:metadata) { instance_double(Bunny::MessageProperties) }
-    let(:payload) { 'my payload' }
+    let(:ears_connection) do
+      instance_double(Bunny::Session, create_channel: consumer_channel)
+    end
+    let(:arg_queue) do
+      instance_double(
+        Bunny::Queue,
+        name: 'aQueue',
+        options: {
+          queue: :options,
+        },
+      )
+    end
+    let(:consumer_class) do
+      instance_double(Class, name: 'SampleConsumer', new: consumer_instance)
+    end
+    let(:consumer_instance) { instance_double(Object) }
+    let(:consumer_queue) do
+      instance_double(
+        Bunny::Queue,
+        name: 'ConsumerQueue',
+        channel: consumer_channel,
+        subscribe_with: nil,
+      )
+    end
+    let(:consumer_channel) do
+      instance_double(
+        Bunny::Channel,
+        prefetch: nil,
+        on_uncaught_exception: nil,
+        number: 11,
+      )
+    end
 
     before do
-      allow(consumer_class).to receive(:new).and_return(consumer_instance)
-      allow(Ears::ConsumerWrapper).to receive(:new).and_return(consumer_wrapper)
-      allow(consumer_wrapper).to receive(:on_delivery)
-      allow(queue).to receive(:subscribe_with)
-      stub_const('MyConsumer', consumer_class)
+      allow(Ears).to receive(:connection).and_return(ears_connection)
+      allow(Bunny::Queue).to receive(:new).and_return(consumer_queue)
     end
 
-    it 'instantiates the given class and registers it as a consumer' do
-      expect(Ears::ConsumerWrapper).to receive(:new).with(
-        consumer_instance,
-        channel,
-        queue,
-        'MyConsumer-1',
-        {},
-      ).and_return(consumer_wrapper)
-      expect(consumer_wrapper).to receive(:on_delivery).and_yield(
-        delivery_info,
-        metadata,
-        payload,
-      )
-      expect(consumer_wrapper).to receive(:process_delivery).with(
-        delivery_info,
-        metadata,
-        payload,
-      )
-      expect(queue).to receive(:subscribe_with).with(consumer_wrapper)
-
-      Ears::Setup.new.consumer(queue, MyConsumer)
-    end
-
-    it 'passes the consumer arguments' do
-      expect(Ears::ConsumerWrapper).to receive(:new).with(
-        consumer_instance,
-        channel,
-        queue,
-        'MyConsumer-1',
-        { a: 1 },
-      ).and_return(consumer_wrapper)
-      expect(consumer_wrapper).to receive(:on_delivery).and_yield(
-        delivery_info,
-        metadata,
-        payload,
-      )
-      expect(consumer_wrapper).to receive(:process_delivery).with(
-        delivery_info,
-        metadata,
-        payload,
-      )
-      expect(queue).to receive(:subscribe_with).with(consumer_wrapper)
-
-      Ears::Setup.new.consumer(queue, MyConsumer, 1, { a: 1 })
-    end
-
-    it 'creates a dedicated channel and queue for each consumer' do
-      expect(connection).to receive(:create_channel)
+    it 'creates the specified number of channels' do
+      expect(ears_connection).to receive(:create_channel)
         .with(nil, 1, true)
-        .and_return(channel)
-        .exactly(3)
-        .times
-      expect(channel).to receive(:prefetch).with(1).exactly(3).times
-      expect(channel).to receive(:on_uncaught_exception).exactly(3).times
-      expect(Bunny::Queue).to receive(:new)
-        .with(channel, 'queue', {})
-        .and_return(queue)
-        .exactly(3)
-        .times
-      expect(queue).to receive(:subscribe_with)
-        .with(consumer_wrapper)
         .exactly(3)
         .times
 
-      Ears::Setup.new.consumer(queue, MyConsumer, 3)
+      setup.consumer(arg_queue, consumer_class, 3)
     end
 
-    it 'passes the prefetch argument to the channel' do
-      expect(channel).to receive(:prefetch).with(5)
+    it 'setups each channel' do
+      expect(consumer_channel).to receive(:prefetch).with(15).once
+      expect(consumer_channel).to receive(:on_uncaught_exception).once
 
-      Ears::Setup.new.consumer(
-        queue,
-        MyConsumer,
+      setup.consumer(
+        arg_queue,
+        consumer_class,
         1,
-        { prefetch: 5, bla: 'test' },
+        { prefetch: 15, custom: :options },
       )
     end
 
-    it 'numbers the consumers' do
-      expect(Ears::ConsumerWrapper).to receive(:new).with(
-        consumer_instance,
-        channel,
-        queue,
-        'MyConsumer-1',
-        {},
-      ).and_return(consumer_wrapper)
-      expect(Ears::ConsumerWrapper).to receive(:new).with(
-        consumer_instance,
-        channel,
-        queue,
-        'MyConsumer-2',
-        {},
-      ).and_return(consumer_wrapper)
+    it 'creates the specified number of queues' do
+      expect(Bunny::Queue).to receive(:new)
+        .exactly(4)
+        .times
+        .with(consumer_channel, arg_queue.name, arg_queue.options)
 
-      Ears::Setup.new.consumer(queue, MyConsumer, 2)
+      setup.consumer(arg_queue, consumer_class, 4)
+    end
+
+    it 'setups each created queue' do
+      expect(consumer_queue).to receive(:subscribe_with).once
+
+      setup.consumer(arg_queue, consumer_class, 1)
+    end
+
+    it 'creates the specified number of consumers' do
+      expect(Ears::ConsumerWrapper).to receive(:new)
+        .and_call_original
+        .exactly(5)
+        .times
+      expect(consumer_class).to receive(:new).exactly(5).times
+
+      setup.consumer(arg_queue, consumer_class, 5)
+    end
+
+    it 'setups the consumer wrappers' do
+      expect(Ears::ConsumerWrapper).to receive(:new)
+        .with(
+          consumer_instance,
+          consumer_channel,
+          consumer_queue,
+          "#{consumer_class.name}-1",
+          { custom: :opts },
+        )
+        .once
+        .and_call_original
+
+      setup.consumer(arg_queue, consumer_class, 1, { custom: :opts })
     end
   end
 end
