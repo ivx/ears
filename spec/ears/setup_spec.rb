@@ -13,7 +13,7 @@ RSpec.describe Ears::Setup do
         ears_channel,
         :type,
         :name,
-        :some_options
+        :some_options,
       )
 
       setup.exchange(:name, :type, :some_options)
@@ -28,15 +28,15 @@ RSpec.describe Ears::Setup do
         {
           custom_argument: :forwared,
           arguments: {
-            'x-custom-argument' => 'forwarded'
-          }
-        }
+            'x-custom-argument' => 'forwarded',
+          },
+        },
       )
 
       setup.queue(
         'aName',
         custom_argument: :forwared,
-        arguments: { 'x-custom-argument' => 'forwarded' }.freeze
+        arguments: { 'x-custom-argument' => 'forwarded' }.freeze,
       )
     end
 
@@ -49,9 +49,9 @@ RSpec.describe Ears::Setup do
           arguments: {
             'x-dead-letter-exchange' => '',
             'x-dead-letter-routing-key' => 'aName.retry',
-            'x-custom-argument' => 'forwarded'
-          }
-        }
+            'x-custom-argument' => 'forwarded',
+          },
+        },
       )
 
       expect(Bunny::Queue).to receive(:new).with(
@@ -62,9 +62,9 @@ RSpec.describe Ears::Setup do
           arguments: {
             'x-dead-letter-exchange' => '',
             'x-dead-letter-routing-key' => 'aName',
-            'x-message-ttl' => 311
-          }
-        }
+            'x-message-ttl' => 311,
+          },
+        },
       )
 
       setup.queue(
@@ -72,7 +72,7 @@ RSpec.describe Ears::Setup do
         retry_queue: true,
         retry_delay: 311,
         custom_argument: :forwared,
-        arguments: { 'x-custom-argument' => 'forwarded' }.freeze
+        arguments: { 'x-custom-argument' => 'forwarded' }.freeze,
       )
     end
 
@@ -83,9 +83,9 @@ RSpec.describe Ears::Setup do
         {
           custom_argument: :forwared,
           arguments: {
-            'x-custom-argument' => 'forwarded'
-          }
-        }
+            'x-custom-argument' => 'forwarded',
+          },
+        },
       )
 
       expect(Bunny::Queue).to receive(:new).with(
@@ -94,16 +94,16 @@ RSpec.describe Ears::Setup do
         {
           custom_argument: :forwared,
           arguments: {
-            'x-custom-argument' => 'forwarded'
-          }
-        }
+            'x-custom-argument' => 'forwarded',
+          },
+        },
       )
 
       setup.queue(
         'aName',
         error_queue: true,
         custom_argument: :forwared,
-        arguments: { 'x-custom-argument' => 'forwarded' }.freeze
+        arguments: { 'x-custom-argument' => 'forwarded' }.freeze,
       )
     end
   end
@@ -117,8 +117,8 @@ RSpec.describe Ears::Setup do
         Bunny::Queue,
         name: 'aQueue',
         options: {
-          queue: :options
-        }
+          queue: :options,
+        },
       )
     end
     let(:consumer_class) do
@@ -130,7 +130,7 @@ RSpec.describe Ears::Setup do
         Bunny::Queue,
         name: 'ConsumerQueue',
         channel: consumer_channel,
-        subscribe_with: nil
+        subscribe_with: nil,
       )
     end
     let(:consumer_channel) do
@@ -138,7 +138,7 @@ RSpec.describe Ears::Setup do
         Bunny::Channel,
         prefetch: nil,
         on_uncaught_exception: nil,
-        number: 11
+        number: 11,
       )
     end
 
@@ -164,7 +164,7 @@ RSpec.describe Ears::Setup do
         arg_queue,
         consumer_class,
         1,
-        { prefetch: 15, custom: :options }
+        { prefetch: 15, custom: :options },
       )
     end
 
@@ -200,7 +200,7 @@ RSpec.describe Ears::Setup do
           consumer_channel,
           consumer_queue,
           "#{consumer_class.name}-1",
-          { custom: :opts }
+          { custom: :opts },
         )
         .once
         .and_call_original
