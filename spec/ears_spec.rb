@@ -39,7 +39,7 @@ RSpec.describe Ears do
 
     it 'throws an error if connection name was not set' do
       expect do
-        Ears.configure(&:to_s)
+        Ears.configure { :empty_block }
       end.to raise_error Ears::Configuration::ConnectionNameMissing
     end
   end
