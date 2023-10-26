@@ -36,7 +36,7 @@ module Ears
       Bunny::Queue.new(
         Ears.channel,
         name,
-        queue_options(bunny_opts, retry_args),
+        queue_options(bunny_opts, retry_args)
       )
     end
 
@@ -72,7 +72,7 @@ module Ears
 
       {
         'x-dead-letter-exchange' => '',
-        'x-dead-letter-routing-key' => "#{name}.retry",
+        'x-dead-letter-routing-key' => "#{name}.retry"
       }
     end
 
@@ -82,7 +82,7 @@ module Ears
         queue.channel,
         queue,
         "#{consumer_class.name}-#{number}",
-        args,
+        args
       )
     end
 
@@ -104,7 +104,7 @@ module Ears
       Bunny::Queue.new(
         Ears.channel,
         "#{name}.retry",
-        opts.merge(retry_queue_opts(name, delay)),
+        opts.merge(retry_queue_opts(name, delay))
       )
     end
 
@@ -113,8 +113,8 @@ module Ears
         arguments: {
           'x-message-ttl' => delay,
           'x-dead-letter-exchange' => '',
-          'x-dead-letter-routing-key' => name,
-        },
+          'x-dead-letter-routing-key' => name
+        }
       }
     end
 
