@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.0 (2023-10-26)
+
+- add new interface to setup consumers including their exchange, queue and binding the queue to the exchange via routing key via `Ears.setup_consumers` and `configure(queue:, exchange:,routing_key:, ...)` for Ears::Consumers subclasses
+
 ## 0.11.2 (2023-10-25)
 
 - Add documentation generation via yard
