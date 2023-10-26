@@ -7,6 +7,52 @@ RSpec.describe Ears::Setup do
 
   before { allow(Ears).to receive(:channel).and_return(ears_channel) }
 
+  # rubocop:disable RSpec/SubjectStub
+  describe '#setup_consumers' do
+    let(:consumers) do
+      [
+        class_double(
+          Ears::Consumer,
+          exchange: 'my-exchange',
+          queue: 'my-queue',
+          exchange_type: :topic,
+          durable_exchange: true,
+          queue_options: {
+            my_option: true,
+          },
+          routing_key: 'my_key',
+        ),
+      ]
+    end
+    let(:an_exchange) { instance_double(Bunny::Exchange) }
+    let(:a_queue) { instance_double(Bunny::Queue, bind: nil) }
+
+    before do
+      allow(setup).to receive_messages(exchange: an_exchange, queue: a_queue)
+      allow(setup).to receive(:consumer)
+    end
+
+    it 'sets up the consumers accordingly including its queues etc.' do
+      setup.setup_consumers(*consumers)
+
+      expect(setup).to have_received(:exchange).with(
+        'my-exchange',
+        :topic,
+        durable: true,
+      )
+      expect(setup).to have_received(:queue).with(
+        'my-queue',
+        { my_option: true },
+      )
+      expect(a_queue).to have_received(:bind).with(
+        an_exchange,
+        routing_key: 'my_key',
+      )
+      expect(setup).to have_received(:consumer).with(a_queue, consumers[0])
+    end
+  end
+  # rubocop:enable RSpec/SubjectStub
+
   describe '#exchange' do
     it 'creates a new Bunny exchange with the given options' do
       expect(Bunny::Exchange).to receive(:new).with(

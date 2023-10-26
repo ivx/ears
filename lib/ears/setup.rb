@@ -62,21 +62,23 @@ module Ears
     #
     # @param [Array<Class<Ears::Consumer>>] consumer_classes An array of subclasses of {Ears::Consumer} that call {Ears::Consumer#configure} in their class definition.
     def setup_consumers(*consumer_classes)
-      consumer_classes.each do |consumer_class|
-        exchange =
-          exchange(
-            consumer_class.exchange,
-            consumer_class.exchange_type,
-            durable: consumer_class.durable_exchange,
-          )
-        configured_queue =
-          queue(consumer_class.queue, consumer_class.queue_options)
-        configured_queue.bind(exchange, routing_key: consumer_class.routing_key)
-        consumer(configured_queue, consumer_class)
-      end
+      consumer_classes.each { |consumer_class| setup_consumer(consumer_class) }
     end
 
     private
+
+    def setup_consumer(consumer_class)
+      exchange =
+        exchange(
+          consumer_class.exchange,
+          consumer_class.exchange_type,
+          durable: consumer_class.durable_exchange,
+        )
+      configured_queue =
+        queue(consumer_class.queue, consumer_class.queue_options)
+      configured_queue.bind(exchange, routing_key: consumer_class.routing_key)
+      consumer(configured_queue, consumer_class)
+    end
 
     def queue_options(bunny_opts, retry_arguments)
       return bunny_opts unless retry_arguments

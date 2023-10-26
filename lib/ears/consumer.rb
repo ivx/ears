@@ -44,12 +44,7 @@ module Ears
       self.queue = opts.fetch(:queue)
       self.exchange = opts.fetch(:exchange)
       self.routing_key = opts.fetch(:routing_key)
-      self.queue_options = {
-        durable: opts.fetch(:durable_queue, true),
-        retry_queue: opts.fetch(:retry_queue, false),
-        retry_delay: opts.fetch(:retry_delay, 5000),
-        error_queue: opts.fetch(:error_queue, false),
-      }
+      self.queue_options = queue_options_from(opts: opts)
       self.durable_exchange = opts.fetch(:durable_exchange, true)
       self.exchange_type = opts.fetch(:exchange_type, :topic)
     end
@@ -138,6 +133,15 @@ module Ears
                   :exchange_type
 
       private
+
+      def queue_options_from(opts:)
+        {
+          durable: opts.fetch(:durable_queue, true),
+          retry_queue: opts.fetch(:retry_queue, false),
+          retry_delay: opts.fetch(:retry_delay, 5000),
+          error_queue: opts.fetch(:error_queue, false),
+        }
+      end
 
       attr_writer :queue,
                   :exchange,

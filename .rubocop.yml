@@ -54,7 +54,6 @@ Metrics/ClassLength:
 
 Metrics/MethodLength:
   Enabled: true
-  Max: 12
   Exclude:
     - 'spec/**/*.rb'
     - 'test/**/*.rb'
