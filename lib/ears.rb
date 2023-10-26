@@ -8,9 +8,10 @@ require 'ears/version'
 module Ears
   class << self
     # The global configuration for Ears.
-    # @attribute [r] configuration
     # @return [Ears::Configuration]
-    attr_reader :configuration
+    def configuration
+      @configuration ||= Ears::Configuration.new
+    end
 
     # Yields the global configuration instance so you can modify it.
     # @yieldparam configuration [Ears::Configuration] The global configuration instance.
@@ -72,9 +73,7 @@ module Ears
 
     # Used internally for testing.
     def reset!
-      @connection = nil
-      Thread.current[:ears_channel] = nil
-      @configuration = Ears::Configuration.new
+      @configuration = @connection = Thread.current[:ears_channel] = nil
     end
 
     private
@@ -102,6 +101,4 @@ module Ears
       }.compact
     end
   end
-
-  reset!
 end
