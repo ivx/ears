@@ -8,7 +8,6 @@ require 'ears/version'
 module Ears
   class << self
     # The global configuration for Ears.
-    # @attribute [r] configuration
     # @return [Ears::Configuration]
     attr_reader :configuration
 
