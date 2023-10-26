@@ -4,9 +4,7 @@ RSpec.describe Ears do
   before { Ears.reset! }
 
   it 'has a version number' do
-    expect(Ears::VERSION).to match(
-      /\A[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\z/,
-    )
+    expect(Ears::VERSION).to match(/\A[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+/)
   end
 
   it 'has a configuration' do
@@ -39,7 +37,7 @@ RSpec.describe Ears do
 
     it 'throws an error if connection name was not set' do
       expect do
-        Ears.configure(&:to_s)
+        Ears.configure { :empty_block }
       end.to raise_error Ears::Configuration::ConnectionNameMissing
     end
   end
@@ -50,14 +48,14 @@ RSpec.describe Ears do
     context 'with mandatory configuration' do
       before do
         allow(Bunny).to receive(:new).and_return(bunny_session)
-        Ears.configure { |config| config.connection_name = 'here_we_go' }
+        Ears.configure { |config| config.connection_name = 'conn_name' }
         Ears.connection
       end
 
       it 'connects with config parameters' do
         expect(Bunny).to have_received(:new).with(
           'amqp://guest:guest@localhost:5672',
-          connection_name: 'here_we_go',
+          connection_name: 'conn_name',
           recovery_attempts: 10,
           recovery_attempts_exhausted: anything,
         )
@@ -72,8 +70,8 @@ RSpec.describe Ears do
       before do
         allow(Bunny).to receive(:new).and_return(bunny_session)
         Ears.configure do |config|
-          config.rabbitmq_url = 'amqp://lol:lol@kek.com:15672'
-          config.connection_name = 'here_we_go'
+          config.rabbitmq_url = 'amqp://user:password@rabbitmq:15672'
+          config.connection_name = 'conn_name'
           config.recover_from_connection_close = false
           config.recovery_attempts = 9
         end
@@ -82,8 +80,8 @@ RSpec.describe Ears do
 
       it 'connects with config parameters' do
         expect(Bunny).to have_received(:new).with(
-          'amqp://lol:lol@kek.com:15672',
-          connection_name: 'here_we_go',
+          'amqp://user:password@rabbitmq:15672',
+          connection_name: 'conn_name',
           recover_from_connection_close: false,
           recovery_attempts: 9,
           recovery_attempts_exhausted: anything,
@@ -128,7 +126,7 @@ RSpec.describe Ears do
   end
 
   describe '.setup' do
-    it 'creates a setup helper and executed the given block on this instace' do
+    it 'creates a setup helper and executed the given block on this instance' do
       instance = :none
       Ears.setup { instance = self }
       expect(instance).to be_a Ears::Setup
