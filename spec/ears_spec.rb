@@ -133,6 +133,17 @@ RSpec.describe Ears do
     end
   end
 
+  describe '.setup_consumers' do
+    let(:klasses) { %i[first_class second_class] }
+
+    it 'calls the setup_consumers' do
+      setup = instance_double(Ears::Setup, setup_consumers: nil)
+      allow(Ears::Setup).to receive(:new).and_return(setup)
+      described_class.setup_consumers(*klasses)
+      expect(setup).to have_received(:setup_consumers).with(*klasses)
+    end
+  end
+
   describe '.stop!' do
     let(:bunny_session) do
       instance_double(

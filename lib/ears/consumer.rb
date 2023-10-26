@@ -27,6 +27,28 @@ module Ears
       middlewares << middleware.new(opts)
     end
 
+    # Configures the consumer, setting queue, exchange and other options to be used by
+    # the add_consumer method.
+    #
+    # @param [Hash] opts The options to configure the consumer with.
+    # @option opts [String] :queue The name of the queue to consume from.
+    # @option opts [String] :exchange The name of the exchange the queue should be bound to.
+    # @option opts [String] :routing_key The routing key used the queue binding.
+    # @option opts [Boolean] :durable_queue (true) Whether the queue should be durable.
+    # @option opts [Boolean] :retry_queue (false) Whether a retry queue should be provided.
+    # @option opts [Integer] :retry_delay (5000) The delay in milliseconds before retrying a message.
+    # @option opts [Boolean] :error_queue (false) Whether an error queue should be provided.
+    # @option opts [Boolean] :durable_exchange (true) Whether the exchange should be durable.
+    # @option opts [Symbol] :exchange_type (:topic) The type of exchange to use.
+    def self.configure(opts = {})
+      self.queue = opts.fetch(:queue)
+      self.exchange = opts.fetch(:exchange)
+      self.routing_key = opts.fetch(:routing_key)
+      self.queue_options = queue_options_from(opts: opts)
+      self.durable_exchange = opts.fetch(:durable_exchange, true)
+      self.exchange_type = opts.fetch(:exchange_type, :topic)
+    end
+
     # The method that is called when a message from the queue is received.
     # Keep in mind that the parameters received can be altered by middlewares!
     #
@@ -100,6 +122,33 @@ module Ears
       unless %i[ack reject requeue].include?(result)
         raise InvalidReturnError, result
       end
+    end
+
+    class << self
+      attr_reader :queue,
+                  :exchange,
+                  :routing_key,
+                  :queue_options,
+                  :durable_exchange,
+                  :exchange_type
+
+      private
+
+      def queue_options_from(opts:)
+        {
+          durable: opts.fetch(:durable_queue, true),
+          retry_queue: opts.fetch(:retry_queue, false),
+          retry_delay: opts.fetch(:retry_delay, 5000),
+          error_queue: opts.fetch(:error_queue, false),
+        }
+      end
+
+      attr_writer :queue,
+                  :exchange,
+                  :routing_key,
+                  :queue_options,
+                  :durable_exchange,
+                  :exchange_type
     end
   end
 end

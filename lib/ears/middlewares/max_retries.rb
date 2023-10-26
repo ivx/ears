@@ -15,6 +15,7 @@ module Ears
 
       def call(delivery_info, metadata, payload, app)
         return handle_exceeded(payload) if retries_exceeded?(metadata)
+
         app.call(delivery_info, metadata, payload)
       end
 
