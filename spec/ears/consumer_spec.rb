@@ -18,7 +18,7 @@ RSpec.describe Ears::Consumer do
 
   describe '.configure' do
     let(:mandatory_options) do
-      { queue: 'test', exchange: 'exchange', routing_key: 'test.new' }
+      { queue: 'test', exchange: 'exchange', routing_keys: ['test.new'] }
     end
     let(:custom_consumer_class) { Class.new(Ears::Consumer) }
 
@@ -37,7 +37,7 @@ RSpec.describe Ears::Consumer do
     it 'sets the routing key' do
       custom_consumer_class.configure(mandatory_options)
 
-      expect(custom_consumer_class.routing_key).to eq('test.new')
+      expect(custom_consumer_class.routing_keys).to eq(['test.new'])
     end
 
     context 'without providing specific options' do

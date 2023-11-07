@@ -33,17 +33,18 @@ module Ears
     # @param [Hash] opts The options to configure the consumer with.
     # @option opts [String] :queue The name of the queue to consume from.
     # @option opts [String] :exchange The name of the exchange the queue should be bound to.
-    # @option opts [String] :routing_key The routing key used the queue binding.
+    # @option opts [Array] :routing_keys The routing keys used for the queue binding.
     # @option opts [Boolean] :durable_queue (true) Whether the queue should be durable.
     # @option opts [Boolean] :retry_queue (false) Whether a retry queue should be provided.
     # @option opts [Integer] :retry_delay (5000) The delay in milliseconds before retrying a message.
     # @option opts [Boolean] :error_queue (false) Whether an error queue should be provided.
     # @option opts [Boolean] :durable_exchange (true) Whether the exchange should be durable.
     # @option opts [Symbol] :exchange_type (:topic) The type of exchange to use.
+    # @option opts [Integer] :threads (1) The number of threads to use for this consumer.
     def self.configure(opts = {})
       self.queue = opts.fetch(:queue)
       self.exchange = opts.fetch(:exchange)
-      self.routing_key = opts.fetch(:routing_key)
+      self.routing_keys = opts.fetch(:routing_keys)
       self.queue_options = queue_options_from(opts: opts)
       self.durable_exchange = opts.fetch(:durable_exchange, true)
       self.exchange_type = opts.fetch(:exchange_type, :topic)
@@ -127,7 +128,7 @@ module Ears
     class << self
       attr_reader :queue,
                   :exchange,
-                  :routing_key,
+                  :routing_keys,
                   :queue_options,
                   :durable_exchange,
                   :exchange_type
@@ -145,7 +146,7 @@ module Ears
 
       attr_writer :queue,
                   :exchange,
-                  :routing_key,
+                  :routing_keys,
                   :queue_options,
                   :durable_exchange,
                   :exchange_type

@@ -39,7 +39,39 @@ end
 
 _Note_: `connection_name` is a mandatory setting!
 
-Next, define your exchanges, queues, and consumers by calling `Ears.setup`.
+Next, you can define your exchanges, queues, and consumers in 2 ways:
+
+#### 1. consumer specific configuration method (recommended)
+
+1. Pass your consumer classes to `Ears.setup`:
+
+```ruby
+Ears.setup do
+  Ears.setup_consumers(Consumer1, Consumer2, ...)
+end
+```
+
+2. Implement your consumers by subclassing `Ears::Consumer`. and call the configure method.
+
+```ruby
+class Consumer1 < Ears::Consumer
+  configure(
+    queue: 'queue_name',
+    exchange: 'exchange',
+    routing_keys: %w[routing_key1 routing_key2],
+    retry_queue: true, # optional configuration, defaults to false, Adds a retry queue
+    error_queue: true, # optional configuration, defaults to false, Adds an error queue
+  )
+  def work(delivery_info, metadata, payload)
+    message = JSON.parse(payload)
+    do_stuff(message)
+
+    ack
+  end
+end
+```
+
+#### 2. Generic configuration method
 
 ```ruby
 Ears.setup do
@@ -57,7 +89,7 @@ Ears.setup do
 end
 ```
 
-Finally, you need to implement `MyConsumer` by subclassing `Ears::Consumer`.
+Finally, you need to implement `MyConsumer` by subclassing `Ears::Consumer`. and call the configure method.
 
 ```ruby
 class MyConsumer < Ears::Consumer
@@ -70,7 +102,9 @@ class MyConsumer < Ears::Consumer
 end
 ```
 
-And, do not forget to run it. Be prepared that unhandled errors will be reraised. So, take care of cleanup work.
+### Run your consumers
+
+Note: Be prepared that unhandled errors will be reraised. So, take care of cleanup work.
 
 ```ruby
 begin
@@ -165,7 +199,24 @@ end
 
 ### Implementing a retrying queue
 
-Sometimes you want to automatically retry processing a message, in case it just failed due to temporary problems. In that case, you can set the `retry_queue` and `retry_delay` parameters when creating the queue.
+Sometimes you want to automatically retry processing a message, in case it just failed due to temporary problems. In that case, you can set the `retry_queue` and `retry_delay` parameters when creating the queue OR pass it to the configure method in your consumer.
+
+```ruby
+class MyConsumer < Ears::Consumer
+  configure(
+    queue: 'queue_name',
+    exchange: 'exchange',
+    routing_keys: %w[routing_key1 routing_key2],
+    retry_queue: true,
+  )
+  def work(delivery_info, metadata, payload)
+    message = JSON.parse(payload)
+    do_stuff(message)
+
+    ack
+  end
+end
+```
 
 ```ruby
 my_queue =
@@ -178,7 +229,24 @@ This will happen indefinitely, so if you want to bail out of this cycle at some 
 
 ### Implementing an error queue
 
-You can set the `error_queue` parameter to automatically create an error queue.
+You can set the `error_queue` parameter to automatically create an error queue, or add it to the configure method in your consumer.
+
+```ruby
+class MyConsumer < Ears::Consumer
+  configure(
+    queue: 'queue_name',
+    exchange: 'exchange',
+    routing_key: %w[routing_key1 routing_key2],
+    error_queue: true,
+  )
+  def work(delivery_info, metadata, payload)
+    message = JSON.parse(payload)
+    do_stuff(message)
+
+    ack
+  end
+end
+```
 
 ```ruby
 my_queue =

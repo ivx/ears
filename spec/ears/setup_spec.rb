@@ -20,7 +20,7 @@ RSpec.describe Ears::Setup do
           queue_options: {
             my_option: true,
           },
-          routing_key: 'my_key',
+          routing_keys: ['my_key'],
         ),
       ]
     end

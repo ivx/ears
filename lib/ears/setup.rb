@@ -76,8 +76,14 @@ module Ears
         )
       configured_queue =
         queue(consumer_class.queue, consumer_class.queue_options)
-      configured_queue.bind(exchange, routing_key: consumer_class.routing_key)
+      bind_queue_to_routing_keys(consumer_class, exchange, configured_queue)
       consumer(configured_queue, consumer_class)
+    end
+
+    def bind_queue_to_routing_keys(consumer_class, exchange, configured_queue)
+      consumer_class.routing_keys.each do |routing_key|
+        configured_queue.bind(exchange, routing_key: routing_key)
+      end
     end
 
     def queue_options(bunny_opts, retry_arguments)
