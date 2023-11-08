@@ -236,7 +236,7 @@ class MyConsumer < Ears::Consumer
   configure(
     queue: 'queue_name',
     exchange: 'exchange',
-    routing_key: %w[routing_key1 routing_key2],
+    routing_keys: %w[routing_key1 routing_key2],
     error_queue: true,
   )
   def work(delivery_info, metadata, payload)
