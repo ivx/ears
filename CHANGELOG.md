@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.0 (2023-11-07)
+
+- Allow adding multiple routing keys to the consumer configuration, configure method within consumer will only accept `routing_keys` array instead of `routing_key` string
+
 ## 0.12.0 (2023-10-26)
 
 - add new interface to setup consumers including their exchange, queue and binding the queue to the exchange via routing key via `Ears.setup_consumers` and `configure(queue:, exchange:,routing_key:, ...)` for Ears::Consumers subclasses
