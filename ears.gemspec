@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.description = 'A gem for building RabbitMQ consumers.'
   spec.homepage = 'https://github.com/ivx/ears'
   spec.license = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 2.7.0')
+  spec.required_ruby_version = Gem::Requirement.new('>= 2.7.7')
 
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
 
@@ -22,12 +22,6 @@ Gem::Specification.new do |spec|
   spec.metadata[
     'changelog_uri'
   ] = 'https://github.com/ivx/ears/blob/main/CHANGELOG.md'
-
-  spec.post_install_message =
-    '
-Ears: the new version changed the exit behaviour in case of uncaught exceptions.
-You may want to have a look into the CHANGELOG!
-'
 
   spec.files =
     Dir.chdir(File.expand_path('..', __FILE__)) do
