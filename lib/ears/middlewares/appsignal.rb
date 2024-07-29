@@ -5,12 +5,12 @@ module Ears
     # A middleware that automatically wraps {Ears::Consumer#work} in an Appsignal transaction.
     class Appsignal < Middleware
       # @param [Hash] opts The options for the middleware.
-      # @option opts [String] :transaction_name The name of the Appsignal transaction.
       # @option opts [String] :class_name The name of the class you want to monitor.
+      # @option opts [String] :namespace ('background') The namespace in which the action should appear.
       def initialize(opts)
         super()
-        @transaction_name = opts.fetch(:transaction_name)
         @class_name = opts.fetch(:class_name)
+        @namespace = opts.fetch(:namespace, 'background')
       end
 
       def call(delivery_info, metadata, payload, app)
@@ -26,14 +26,12 @@ module Ears
 
       private
 
-      attr_reader :transaction_name, :class_name
+      attr_reader :namespace, :class_name
 
       def start_transaction(&block)
-        ::Appsignal.monitor_transaction(
-          transaction_name,
-          class: class_name,
-          method: 'work',
-          queue_start: Time.now.utc,
+        ::Appsignal.monitor(
+          namespace: namespace,
+          action: "#{class_name}#work",
           &block
         )
       end
