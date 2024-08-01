@@ -32,8 +32,7 @@ module Ears
         ::Appsignal.monitor(
           namespace: namespace,
           action: "#{class_name}#work",
-          &block
-        )
+        ) { ::Appsignal.instrument('process_message.ears', &block) }
       end
     end
   end

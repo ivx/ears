@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.1 (2024-07-31)
+
+- Add instrumentation around block in Appsignal middleware
+
 ## 0.14.0 (2024-07-29)
 
 - **[Breaking]** Adjust Appsignal middleware to use `Appsignal.monitor`.  
