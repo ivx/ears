@@ -9,30 +9,38 @@ RSpec.describe Ears::Middlewares::Appsignal do
   let(:middleware) do
     Ears::Middlewares::Appsignal.new(class_name: 'MyConsumer')
   end
-  let(:now) { Time.utc(2020) }
 
-  before { allow(Time).to receive_message_chain(:now, :utc).and_return(now) }
+  before do
+    allow(appsignal).to receive(:monitor).and_yield
+    allow(appsignal).to receive(:instrument).and_yield
+  end
 
   it 'returns the result of the downstream middleware' do
-    expect(appsignal).to receive(:monitor).and_yield
-    expect(
-      middleware.call(delivery_info, metadata, payload, Proc.new { :moep }),
-    ).to eq(:moep)
+    result =
+      middleware.call(delivery_info, metadata, payload, Proc.new { :moep })
+
+    expect(result).to eq(:moep)
   end
 
   it 'starts an Appsignal transaction and calls the downstream middleware' do
-    expect(appsignal).to receive(:monitor).with(
-      namespace: 'background',
-      action: 'MyConsumer#work',
-    ).and_yield
     expect { |b|
       middleware.call(delivery_info, metadata, payload, Proc.new(&b))
     }.to yield_control
+
+    expect(appsignal).to have_received(:monitor).with(
+      namespace: 'background',
+      action: 'MyConsumer#work',
+    )
+  end
+
+  it 'starts an Appsignal instrumentation' do
+    middleware.call(delivery_info, metadata, payload, Proc.new { :moep })
+
+    expect(appsignal).to have_received(:instrument).with('process_message.ears')
   end
 
   it 'calls set_error when an error is raised' do
     error = RuntimeError.new('moep')
-    expect(appsignal).to receive(:monitor).and_yield
     expect(appsignal).to receive(:set_error).with(error)
 
     expect do
@@ -54,13 +62,14 @@ RSpec.describe Ears::Middlewares::Appsignal do
     end
 
     it 'starts an Appsignal transaction with the given namespace and calls the downstream middleware' do
-      expect(appsignal).to receive(:monitor).with(
-        namespace: 'cronjob',
-        action: 'MyConsumer#work',
-      ).and_yield
       expect { |b|
         middleware.call(delivery_info, metadata, payload, Proc.new(&b))
       }.to yield_control
+
+      expect(appsignal).to have_received(:monitor).with(
+        namespace: 'cronjob',
+        action: 'MyConsumer#work',
+      )
     end
   end
 end
