@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.0 (2025-01-08)
+
+- Enhance Consumer#configure method to accept threads option, which will be passed to Ears::Setup.
+
 ## 0.15.0 (2025-01-14)
 
 - Drop support for ruby 2.7

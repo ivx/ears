@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    ears (0.15.0)
-      bunny (~> 2.22.0)
+    ears (0.16.0)
+      bunny (>= 2.22.0)
       multi_json
 
 GEM
