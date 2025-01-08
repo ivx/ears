@@ -21,11 +21,13 @@ RSpec.describe Ears::Setup do
             my_option: true,
           },
           routing_keys: ['my_key'],
+          threads: threads,
         ),
       ]
     end
     let(:an_exchange) { instance_double(Bunny::Exchange) }
     let(:a_queue) { instance_double(Bunny::Queue, bind: nil) }
+    let(:threads) { 10 }
 
     before do
       allow(setup).to receive_messages(exchange: an_exchange, queue: a_queue)
@@ -48,7 +50,11 @@ RSpec.describe Ears::Setup do
         an_exchange,
         routing_key: 'my_key',
       )
-      expect(setup).to have_received(:consumer).with(a_queue, consumers[0])
+      expect(setup).to have_received(:consumer).with(
+        a_queue,
+        consumers[0],
+        threads,
+      )
     end
   end
   # rubocop:enable RSpec/SubjectStub
