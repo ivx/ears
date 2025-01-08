@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.0 (2025-01-08)
+
+- Enhance Consumer#configure method to accept threads option, which will be passed to Ears::Setup.
+- Update dependencies
+
 ## 0.14.1 (2024-07-31)
 
 - Add instrumentation around block in Appsignal middleware
