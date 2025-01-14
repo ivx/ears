@@ -1,13 +1,18 @@
 # Changelog
 
+## 0.15.0 (2025-01-14)
+
+- Drop support for ruby 2.7
+- Add support for ruby 3.4
+
 ## 0.14.1 (2024-07-31)
 
 - Add instrumentation around block in Appsignal middleware
 
 ## 0.14.0 (2024-07-29)
 
-- **[Breaking]** Adjust Appsignal middleware to use `Appsignal.monitor`.  
-  To use the middleware the `appsignal` gem in version `>= 3.11.0` is required.  
+- **[Breaking]** Adjust Appsignal middleware to use `Appsignal.monitor`.
+  To use the middleware the `appsignal` gem in version `>= 3.11.0` is required.
   The configuration of the middleware changed and now only requires one option `class_name` and an optional `namespace`.
 
 ## 0.13.0 (2023-11-07)
