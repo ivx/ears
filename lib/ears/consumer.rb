@@ -40,6 +40,7 @@ module Ears
     # @option opts [Boolean] :error_queue (false) Whether an error queue should be provided.
     # @option opts [Boolean] :durable_exchange (true) Whether the exchange should be durable.
     # @option opts [Symbol] :exchange_type (:topic) The type of exchange to use.
+    # @option opts [Integer] :threads (1) The number of threads to use for this consumer.
     def self.configure(opts = {})
       self.queue = opts.fetch(:queue)
       self.exchange = opts.fetch(:exchange)
@@ -47,6 +48,7 @@ module Ears
       self.queue_options = queue_options_from(opts: opts)
       self.durable_exchange = opts.fetch(:durable_exchange, true)
       self.exchange_type = opts.fetch(:exchange_type, :topic)
+      self.threads = opts.fetch(:threads, 1)
     end
 
     # The method that is called when a message from the queue is received.
@@ -130,7 +132,8 @@ module Ears
                   :routing_keys,
                   :queue_options,
                   :durable_exchange,
-                  :exchange_type
+                  :exchange_type,
+                  :threads
 
       private
 
@@ -148,7 +151,8 @@ module Ears
                   :routing_keys,
                   :queue_options,
                   :durable_exchange,
-                  :exchange_type
+                  :exchange_type,
+                  :threads
     end
   end
 end

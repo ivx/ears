@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    ears (0.15.0)
-      bunny (~> 2.22.0)
+    ears (0.16.0)
+      bunny (>= 2.22.0)
       multi_json
 
 GEM
@@ -10,7 +10,7 @@ GEM
   specs:
     amq-protocol (2.3.2)
     ast (2.4.2)
-    bunny (2.22.0)
+    bunny (2.23.0)
       amq-protocol (~> 2.3, >= 2.3.1)
       sorted_set (~> 1, >= 1.0.2)
     diff-lcs (1.5.1)
