@@ -19,6 +19,9 @@ RSpec.describe Ears::Setup do
           durable_exchange: true,
           queue_options: {
             my_option: true,
+            arguments: {
+              'x-custom-argument' => 'forwarded',
+            },
           },
           routing_keys: ['my_key'],
           threads: threads,
@@ -44,7 +47,7 @@ RSpec.describe Ears::Setup do
       )
       expect(setup).to have_received(:queue).with(
         'my-queue',
-        { my_option: true },
+        { my_option: true, arguments: { 'x-custom-argument' => 'forwarded' } },
       )
       expect(a_queue).to have_received(:bind).with(
         an_exchange,

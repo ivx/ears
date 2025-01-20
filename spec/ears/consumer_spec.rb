@@ -132,6 +132,20 @@ RSpec.describe Ears::Consumer do
         expect(custom_consumer_class.exchange_type).to eq(:direct)
       end
     end
+
+    context 'with additional queue arguments specified' do
+      it 'sets the queue options' do
+        custom_consumer_class.configure(
+          mandatory_options.merge({ arguments: { 'x-message-ttl' => 1000 } }),
+        )
+
+        expect(custom_consumer_class.queue_options).to include(
+          arguments: {
+            'x-message-ttl' => 1000,
+          },
+        )
+      end
+    end
   end
 
   describe '#work' do

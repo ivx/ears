@@ -41,6 +41,7 @@ module Ears
     # @option opts [Boolean] :durable_exchange (true) Whether the exchange should be durable.
     # @option opts [Symbol] :exchange_type (:topic) The type of exchange to use.
     # @option opts [Integer] :threads (1) The number of threads to use for this consumer.
+    # @option opts [Hash] :arguments (nil) Additional arguments for the queue.
     def self.configure(opts = {})
       self.queue = opts.fetch(:queue)
       self.exchange = opts.fetch(:exchange)
@@ -143,7 +144,8 @@ module Ears
           retry_queue: opts.fetch(:retry_queue, false),
           retry_delay: opts.fetch(:retry_delay, 5000),
           error_queue: opts.fetch(:error_queue, false),
-        }
+          arguments: opts.fetch(:arguments, nil),
+        }.compact
       end
 
       attr_writer :queue,
