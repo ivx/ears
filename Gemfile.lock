@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ears (0.16.0)
+    ears (0.17.0)
       bunny (>= 2.22.0)
       multi_json
 
@@ -119,4 +119,4 @@ DEPENDENCIES
   yard
 
 BUNDLED WITH
-   2.5.23
+   2.6.3
