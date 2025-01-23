@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.0 (2025-01-20)
+
+- Enhance Consumer#configure method to accept custom queue arguments.
+
 ## 0.17.0 (2025-01-20)
 
 - Drop support for ruby 3.0
