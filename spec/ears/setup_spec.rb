@@ -4,6 +4,7 @@ RSpec.describe Ears::Setup do
   subject(:setup) { Ears::Setup.new }
 
   let(:ears_channel) { instance_double(Bunny::Channel) }
+  let(:prefetch) { 15 }
 
   before { allow(Ears).to receive(:channel).and_return(ears_channel) }
 
@@ -25,6 +26,7 @@ RSpec.describe Ears::Setup do
           },
           routing_keys: ['my_key'],
           threads: threads,
+          prefetch: prefetch,
         ),
       ]
     end
@@ -57,6 +59,7 @@ RSpec.describe Ears::Setup do
         a_queue,
         consumers[0],
         threads,
+        prefetch: prefetch,
       )
     end
   end
@@ -191,7 +194,7 @@ RSpec.describe Ears::Setup do
     let(:consumer_channel) do
       instance_double(
         Bunny::Channel,
-        prefetch: nil,
+        prefetch: prefetch,
         on_uncaught_exception: nil,
         number: 11,
       )
@@ -219,7 +222,7 @@ RSpec.describe Ears::Setup do
         arg_queue,
         consumer_class,
         1,
-        { prefetch: 15, custom: :options },
+        { prefetch: prefetch, custom: :options },
       )
     end
 

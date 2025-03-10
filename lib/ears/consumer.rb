@@ -42,6 +42,7 @@ module Ears
     # @option opts [Symbol] :exchange_type (:topic) The type of exchange to use.
     # @option opts [Integer] :threads (1) The number of threads to use for this consumer.
     # @option opts [Hash] :arguments (nil) Additional arguments for the queue.
+    # @option opts [Integer] :prefetch (1) The number of messages to prefetch.
     def self.configure(opts = {})
       self.queue = opts.fetch(:queue)
       self.exchange = opts.fetch(:exchange)
@@ -50,6 +51,7 @@ module Ears
       self.durable_exchange = opts.fetch(:durable_exchange, true)
       self.exchange_type = opts.fetch(:exchange_type, :topic)
       self.threads = opts.fetch(:threads, 1)
+      self.prefetch = opts.fetch(:prefetch, 1)
     end
 
     # The method that is called when a message from the queue is received.
@@ -134,7 +136,8 @@ module Ears
                   :queue_options,
                   :durable_exchange,
                   :exchange_type,
-                  :threads
+                  :threads,
+                  :prefetch
 
       private
 
@@ -154,7 +157,8 @@ module Ears
                   :queue_options,
                   :durable_exchange,
                   :exchange_type,
-                  :threads
+                  :threads,
+                  :prefetch
     end
   end
 end

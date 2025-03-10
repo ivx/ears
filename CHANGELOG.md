@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.0 (2025-03-10)
+
+- Enhance Consumer#configure method and Ears.setup_consumers to accept `prefetch` option, which will be passed to Ears::Setup.
+
 ## 0.18.0 (2025-01-20)
 
 - Enhance Consumer#configure method to accept custom queue arguments.
