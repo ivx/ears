@@ -77,7 +77,12 @@ module Ears
       configured_queue =
         queue(consumer_class.queue, consumer_class.queue_options)
       bind_queue_to_routing_keys(consumer_class, exchange, configured_queue)
-      consumer(configured_queue, consumer_class, consumer_class.threads)
+      consumer(
+        configured_queue,
+        consumer_class,
+        consumer_class.threads,
+        { prefetch: consumer_class.prefetch },
+      )
     end
 
     def bind_queue_to_routing_keys(consumer_class, exchange, configured_queue)
