@@ -43,8 +43,8 @@ module Ears
     end
 
     # Used to set up your exchanges, queues and consumers. See {Ears::Setup} for implementation details.
-    def setup(&block)
-      Ears::Setup.new.instance_eval(&block)
+    def setup(&)
+      Ears::Setup.new.instance_eval(&)
     end
 
     # Quick setup your consumers (including exchanges and queues).

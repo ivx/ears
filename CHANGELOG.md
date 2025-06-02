@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.0 (2025-06-02)
+
+- Drop support for Ruby 3.1
+
 ## 0.19.0 (2025-03-10)
 
 - Enhance Consumer#configure method and Ears.setup_consumers to accept `prefetch` option, which will be passed to Ears::Setup.

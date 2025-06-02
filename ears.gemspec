@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.description = 'A gem for building RabbitMQ consumers.'
   spec.homepage = 'https://github.com/ivx/ears'
   spec.license = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 3.0.7')
+  spec.required_ruby_version = Gem::Requirement.new('>= 3.2.8')
 
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
 
