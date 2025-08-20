@@ -3,6 +3,7 @@ require 'ears/configuration'
 require 'ears/consumer'
 require 'ears/middleware'
 require 'ears/publisher'
+require 'ears/publisher_channel_pool'
 require 'ears/setup'
 require 'ears/version'
 

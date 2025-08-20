@@ -1,8 +1,12 @@
 require 'bunny'
 require 'multi_json'
+require 'ears/publisher_channel_pool'
 
 module Ears
   # Publisher for sending messages to RabbitMQ exchanges.
+  #
+  # Uses a connection pool for thread-safe publishing with configurable pool size.
+  # This provides better performance and thread safety compared to using per-thread channels.
   class Publisher
     # Error that is raised when publishing fails
     class PublishError < StandardError
@@ -31,7 +35,6 @@ module Ears
       @exchange_name = exchange_name
       @exchange_type = exchange_type
       @exchange_options = { durable: true }.merge(exchange_options)
-      @exchange = nil
     end
 
     # Publishes a JSON message to the configured exchange.
@@ -45,31 +48,30 @@ module Ears
     def publish(data, routing_key:, **options)
       publish_options = default_publish_options.merge(options)
 
-      exchange.publish(
-        MultiJson.dump(data),
-        { routing_key: routing_key }.merge(publish_options),
-      )
+      PublisherChannelPool.with_channel do |channel|
+        exchange = create_exchange(channel)
+        exchange.publish(
+          MultiJson.dump(data),
+          { routing_key: routing_key }.merge(publish_options),
+        )
+      end
     rescue => e
       raise PublishError.new(exchange_name, routing_key, e)
     end
 
-    # Closes and resets the exchange, forcing it to be recreated on next use.
+    # Resets the channel pool, forcing new channels to be created.
     # This can be useful for connection recovery scenarios.
     #
     # @return [void]
     def reset!
-      @exchange = nil
+      PublisherChannelPool.reset!
     end
 
     private
 
-    def exchange
-      @exchange ||= create_exchange
-    end
-
-    def create_exchange
+    def create_exchange(channel)
       Bunny::Exchange.new(
-        Ears.channel,
+        channel,
         exchange_type,
         exchange_name,
         exchange_options,

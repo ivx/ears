@@ -14,7 +14,9 @@ RSpec.describe Ears::Publisher do
   let(:message) { 'test message' }
 
   before do
-    allow(Ears).to receive(:channel).and_return(mock_channel)
+    allow(Ears::PublisherChannelPool).to receive(:with_channel).and_yield(
+      mock_channel,
+    )
     allow(Bunny::Exchange).to receive(:new).with(
       mock_channel,
       exchange_type,
@@ -86,14 +88,15 @@ RSpec.describe Ears::Publisher do
   describe '#reset!' do
     before do
       allow(mock_exchange).to receive(:publish)
+      allow(Ears::PublisherChannelPool).to receive(:reset!)
 
       publisher.publish('test', routing_key:)
     end
 
-    it 'resets the exchange instance' do
-      expect { publisher.reset! }.to change {
-        publisher.instance_variable_get(:@exchange)
-      }.to(nil)
+    it 'resets the channel pool' do
+      publisher.reset!
+
+      expect(Ears::PublisherChannelPool).to have_received(:reset!)
     end
 
     it 'creates new exchange after reset' do
