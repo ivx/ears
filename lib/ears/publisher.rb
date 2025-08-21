@@ -5,6 +5,8 @@ require 'ears/publisher_channel_pool'
 module Ears
   # Publisher for sending messages to RabbitMQ exchanges.
   #
+  # This is an experimental implementation, do not use it in production environments.
+  #
   # Uses a connection pool for thread-safe publishing with configurable pool size.
   # This provides better performance and thread safety compared to using per-thread channels.
   class Publisher

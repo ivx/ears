@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.0 (2025-06-02)
+
+- **[Experimental]**: Introduce Ears::Publisher - do not use in production environments
+
 ## 0.20.0 (2025-06-02)
 
 - Drop support for Ruby 3.1
