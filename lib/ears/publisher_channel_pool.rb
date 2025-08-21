@@ -18,17 +18,37 @@ module Ears
       #
       # @return [void]
       def reset!
+        pool = @channel_pool
         @channel_pool = nil
+        @creator_pid = nil
+
+        pool&.shutdown(&:close)
+        nil
       end
 
       private
 
       def channel_pool
-        @channel_pool ||=
-          ConnectionPool.new(
-            size: Ears.configuration.publisher_pool_size,
-            timeout: Ears.configuration.publisher_pool_timeout,
-          ) { Ears.connection.create_channel }
+        # Recreate lazily after a fork
+        reset! if @creator_pid && @creator_pid != Process.pid
+
+        return @channel_pool if @channel_pool
+
+        init_mutex.synchronize do
+          @channel_pool ||=
+            begin
+              @creator_pid = Process.pid
+
+              ConnectionPool.new(
+                size: Ears.configuration.publisher_pool_size,
+                timeout: Ears.configuration.publisher_pool_timeout,
+              ) { Ears.connection.create_channel }
+            end
+        end
+      end
+
+      def init_mutex
+        @init_mutex ||= Mutex.new
       end
     end
   end
