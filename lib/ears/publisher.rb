@@ -19,15 +19,6 @@ module Ears
       end
     end
 
-    # @return [String] The name of the exchange to publish to
-    attr_reader :exchange_name
-
-    # @return [Symbol] The type of the exchange (:direct, :fanout, :topic or :headers)
-    attr_reader :exchange_type
-
-    # @return [Hash] The options for the exchange
-    attr_reader :exchange_options
-
     # Creates a new publisher for the specified exchange.
     #
     # @param [String] exchange_name The name of the exchange to publish to.
@@ -70,6 +61,8 @@ module Ears
     end
 
     private
+
+    attr_reader :exchange_name, :exchange_type, :exchange_options
 
     def create_exchange(channel)
       Bunny::Exchange.new(
