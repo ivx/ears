@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.0.beta.1 (2025-08-21)
+
+- **[Experimental]**: Introduce Ears::Publisher with thread-safe channel pooling - do not use in production environments
+
 ## 0.20.0 (2025-06-02)
 
 - Drop support for Ruby 3.1

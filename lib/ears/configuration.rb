@@ -8,6 +8,8 @@ module Ears
 
     DEFAULT_RABBITMQ_URL = 'amqp://guest:guest@localhost:5672'
     DEFAULT_RECOVERY_ATTEMPTS = 10
+    DEFAULT_PUBLISHER_POOL_SIZE = 32
+    DEFAULT_PUBLISHER_POOL_TIMEOUT = 2
 
     # @return [String] the connection string for RabbitMQ.
     attr_accessor :rabbitmq_url
@@ -21,9 +23,17 @@ module Ears
     # @return [Integer] max number of recovery attempts, nil means forever
     attr_accessor :recovery_attempts
 
+    # @return [Integer] the size of the publisher channel pool
+    attr_accessor :publisher_pool_size
+
+    # @return [Integer] the timeout in seconds for acquiring a channel from the publisher pool
+    attr_accessor :publisher_pool_timeout
+
     def initialize
       @rabbitmq_url = DEFAULT_RABBITMQ_URL
       @recovery_attempts = DEFAULT_RECOVERY_ATTEMPTS
+      @publisher_pool_size = DEFAULT_PUBLISHER_POOL_SIZE
+      @publisher_pool_timeout = DEFAULT_PUBLISHER_POOL_TIMEOUT
     end
 
     # @return [Proc] that is passed to Bunny’s recovery_attempts_exhausted block. Nil if recovery_attempts is nil.
