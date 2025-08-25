@@ -57,6 +57,100 @@ RSpec.describe Ears::Configuration do
     end
   end
 
+  describe 'publisher retry configuration' do
+    describe '#publisher_max_retries' do
+      it 'has a default value of 3' do
+        expect(configuration.publisher_max_retries).to eq(3)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_max_retries = 5
+        expect(configuration.publisher_max_retries).to eq(5)
+      end
+    end
+
+    describe '#publisher_retry_base_delay' do
+      it 'has a default value of 2' do
+        expect(configuration.publisher_retry_base_delay).to eq(2)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_retry_base_delay = 1.0
+        expect(configuration.publisher_retry_base_delay).to eq(1.0)
+      end
+    end
+
+    describe '#publisher_retry_backoff_factor' do
+      it 'has a default value of 2.0' do
+        expect(configuration.publisher_retry_backoff_factor).to eq(2.0)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_retry_backoff_factor = 1.5
+        expect(configuration.publisher_retry_backoff_factor).to eq(1.5)
+      end
+    end
+  end
+
+  describe 'publisher pool configuration' do
+    describe '#publisher_pool_size' do
+      it 'has a default value of 32' do
+        expect(configuration.publisher_pool_size).to eq(32)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_pool_size = 16
+        expect(configuration.publisher_pool_size).to eq(16)
+      end
+    end
+
+    describe '#publisher_pool_timeout' do
+      it 'has a default value of 2' do
+        expect(configuration.publisher_pool_timeout).to eq(2)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_pool_timeout = 5
+        expect(configuration.publisher_pool_timeout).to eq(5)
+      end
+    end
+  end
+
+  describe 'publisher connection recovery configuration' do
+    describe '#publisher_connection_attempts' do
+      it 'has a default value of 30' do
+        expect(configuration.publisher_connection_attempts).to eq(30)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_connection_attempts = 10
+        expect(configuration.publisher_connection_attempts).to eq(10)
+      end
+    end
+
+    describe '#publisher_connection_base_delay' do
+      it 'has a default value of 1' do
+        expect(configuration.publisher_connection_base_delay).to eq(1)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_connection_base_delay = 0.5
+        expect(configuration.publisher_connection_base_delay).to eq(0.5)
+      end
+    end
+
+    describe '#publisher_connection_backoff_factor' do
+      it 'has a default value of 1.5' do
+        expect(configuration.publisher_connection_backoff_factor).to eq(1.5)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_connection_backoff_factor = 2.0
+        expect(configuration.publisher_connection_backoff_factor).to eq(2.0)
+      end
+    end
+  end
+
   describe '#validate!' do
     it 'returns nil on valid configuration' do
       configuration.connection_name = 'test'
