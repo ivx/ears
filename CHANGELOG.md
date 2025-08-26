@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.0.beta.2 (2025-08-26)
+
+- **[Experimental]**: Remove JSON parsing from `Ears::Publisher`
+
 ## 0.21.0.beta.1 (2025-08-21)
 
 - **[Experimental]**: Introduce Ears::Publisher with thread-safe channel pooling - do not use in production environments
