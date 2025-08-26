@@ -1,5 +1,4 @@
 require 'bunny'
-require 'multi_json'
 require 'ears/publisher_channel_pool'
 
 module Ears
@@ -58,7 +57,7 @@ module Ears
       PublisherChannelPool.with_channel do |channel|
         exchange = create_exchange(channel)
         exchange.publish(
-          MultiJson.dump(data),
+          data,
           { routing_key: routing_key }.merge(publish_options),
         )
       end

@@ -27,12 +27,8 @@ RSpec.describe Ears::Publisher do
 
   describe '#publish' do
     let(:data) { { id: 1, name: 'test' } }
-    let(:json_string) { '{"id":1,"name":"test"}' }
 
-    before do
-      allow(mock_exchange).to receive(:publish)
-      allow(MultiJson).to receive(:dump).with(data).and_return(json_string)
-    end
+    before { allow(mock_exchange).to receive(:publish) }
 
     it 'serializes data to JSON and publishes' do
       publisher.publish(data, routing_key: routing_key)
@@ -46,7 +42,7 @@ RSpec.describe Ears::Publisher do
         content_type: 'application/json',
       }
       expect(mock_exchange).to have_received(:publish).with(
-        json_string,
+        data,
         expected_options,
       )
     end
@@ -64,7 +60,7 @@ RSpec.describe Ears::Publisher do
         content_type: 'application/json',
       }
       expect(mock_exchange).to have_received(:publish).with(
-        json_string,
+        data,
         expected_options,
       )
     end

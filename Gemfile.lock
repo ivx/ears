@@ -5,12 +5,14 @@ PATH
       bunny (>= 2.22.0)
       connection_pool (~> 2.4)
       multi_json
+      oj
 
 GEM
   remote: https://rubygems.org/
   specs:
     amq-protocol (2.3.4)
     ast (2.4.3)
+    bigdecimal (3.2.2)
     bunny (2.24.0)
       amq-protocol (~> 2.3)
       sorted_set (~> 1, >= 1.0.2)
@@ -21,6 +23,10 @@ GEM
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     multi_json (1.17.0)
+    oj (3.16.11)
+      bigdecimal (>= 3.0)
+      ostruct (>= 0.2)
+    ostruct (0.6.3)
     parallel (1.27.0)
     parser (3.3.9.0)
       ast (~> 2.4.1)
@@ -109,6 +115,7 @@ DEPENDENCIES
 CHECKSUMS
   amq-protocol (2.3.4) sha256=98be5b9244e28dc66acc8351a254dbf45d996c5a0b7d49ab3ff8b72b0d2e6308
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
+  bigdecimal (3.2.2) sha256=39085f76b495eb39a79ce07af716f3a6829bc35eb44f2195e2753749f2fa5adc
   bunny (2.24.0) sha256=072fe4ae98eaa9c95a17e4d166204f710bba8a9a7070b73a8c3b023f439d1682
   connection_pool (2.5.3) sha256=cfd74a82b9b094d1ce30c4f1a346da23ee19dc8a062a16a85f58eab1ced4305b
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
@@ -118,6 +125,8 @@ CHECKSUMS
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   multi_json (1.17.0) sha256=76581f6c96aebf2e85f8a8b9854829e0988f335e8671cd1a56a1036eb75e4a1b
+  oj (3.16.11) sha256=2aab609d2bc896529bd3c70d737f591c13932a640ba6164a0f7e414efdb052b1
+  ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.9.0) sha256=94d6929354b1a6e3e1f89d79d4d302cc8f5aa814431a6c9c7e0623335d7687f2
   prettier_print (1.2.1) sha256=a72838b5f23facff21f90a5423cdcdda19e4271092b41f4ea7f50b83929e6ff9
