@@ -14,6 +14,10 @@ RSpec.describe Ears::Publisher do
   let(:message) { 'test message' }
 
   before do
+    mock_connection = instance_double(Bunny::Session)
+    allow(mock_connection).to receive(:open?).and_return(true)
+    allow(Ears).to receive(:connection).and_return(mock_connection)
+
     allow(Ears::PublisherChannelPool).to receive(:with_channel).and_yield(
       mock_channel,
     )
@@ -110,12 +114,50 @@ RSpec.describe Ears::Publisher do
     end
 
     context 'when publish succeeds on first attempt' do
+      before { allow(connection).to receive(:open?).and_return(true) }
+
       it 'publishes without retrying' do
         publisher.publish(data, routing_key: routing_key)
 
         expect(mock_exchange).to have_received(:publish).once
         expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
         expect(publisher).not_to have_received(:sleep)
+      end
+    end
+
+    context 'when connection is closed on first attempt (proactive check)' do
+      before do
+        # Connection is closed initially, then recovers after one retry attempt
+        allow(connection).to receive(:open?).and_return(
+          false,
+          false,
+          true,
+          true,
+        )
+        allow(Ears::PublisherChannelPool).to receive(:reset!)
+      end
+
+      it 'triggers retry mechanism' do
+        publisher.publish(data, routing_key: routing_key)
+
+        expect(publisher).to have_received(:sleep).once.with(0.1)
+        expect(Ears::PublisherChannelPool).to have_received(:reset!).once
+      end
+
+      it 'successfully publishes after connection recovers' do
+        publisher.publish(data, routing_key: routing_key)
+
+        expect(mock_exchange).to have_received(:publish).once
+      end
+
+      it 'never attempts to publish when connection is closed' do
+        allow(connection).to receive(:open?).and_return(false)
+
+        expect {
+          publisher.publish(data, routing_key: routing_key)
+        }.to raise_error(Ears::Publisher::PublishToStaleChannelError)
+
+        expect(Ears::PublisherChannelPool).not_to have_received(:with_channel)
       end
     end
 
@@ -150,7 +192,12 @@ RSpec.describe Ears::Publisher do
 
     context 'when connection takes time to recover' do
       before do
-        allow(connection).to receive(:open?).and_return(false, false, true)
+        allow(connection).to receive(:open?).and_return(
+          true,
+          false,
+          false,
+          true,
+        )
         call_count = 0
         allow(mock_exchange).to receive(:publish) do
           call_count += 1
@@ -189,13 +236,16 @@ RSpec.describe Ears::Publisher do
       it 'exhausts connection attempts and raises original error' do
         expect {
           publisher.publish(data, routing_key: routing_key)
-        }.to raise_error(Bunny::ConnectionClosedError, /Connection lost/)
+        }.to raise_error(
+          Ears::Publisher::PublishToStaleChannelError,
+          'Connection is not open',
+        )
       end
 
       it 'attempts to reconnect configured number of times' do
         expect {
           publisher.publish(data, routing_key: routing_key)
-        }.to raise_error(Bunny::ConnectionClosedError)
+        }.to raise_error(Ears::Publisher::PublishToStaleChannelError)
 
         expect(publisher).to have_received(:sleep).exactly(3).times
       end
@@ -203,7 +253,7 @@ RSpec.describe Ears::Publisher do
       it 'uses exponential backoff until exhausted' do
         expect {
           publisher.publish(data, routing_key: routing_key)
-        }.to raise_error(Bunny::ConnectionClosedError)
+        }.to raise_error(Ears::Publisher::PublishToStaleChannelError)
 
         expect(publisher).to have_received(:sleep).with(0.1).ordered
         expect(publisher).to have_received(:sleep).with(0.2).ordered
@@ -213,7 +263,7 @@ RSpec.describe Ears::Publisher do
       it 'does not reset channel pool when connection never recovers' do
         expect {
           publisher.publish(data, routing_key: routing_key)
-        }.to raise_error(Bunny::ConnectionClosedError)
+        }.to raise_error(Ears::Publisher::PublishToStaleChannelError)
 
         expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
       end
@@ -235,7 +285,7 @@ RSpec.describe Ears::Publisher do
       it 'respects custom connection configuration values' do
         expect {
           publisher.publish(data, routing_key: routing_key)
-        }.to raise_error(Bunny::ConnectionClosedError)
+        }.to raise_error(Ears::Publisher::PublishToStaleChannelError)
 
         expect(publisher).to have_received(:sleep).with(0.5).ordered
         expect(publisher).to have_received(:sleep).with(1.5).ordered
@@ -245,7 +295,10 @@ RSpec.describe Ears::Publisher do
     context 'when publish fails with non-connection error' do
       let(:error) { StandardError.new('Invalid data') }
 
-      before { allow(mock_exchange).to receive(:publish).and_raise(error) }
+      before do
+        allow(connection).to receive(:open?).and_return(true)
+        allow(mock_exchange).to receive(:publish).and_raise(error)
+      end
 
       it 'does not retry and raises immediately' do
         expect {

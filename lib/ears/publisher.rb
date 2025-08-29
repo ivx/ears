@@ -9,12 +9,18 @@ module Ears
   # Uses a connection pool for thread-safe publishing with configurable pool size.
   # This provides better performance and thread safety compared to using per-thread channels.
   class Publisher
+    class PublishToStaleChannelError < StandardError
+    end
+
     # Connection errors that should trigger retries
     RETRYABLE_ERRORS = [
+      PublishToStaleChannelError,
       Bunny::ConnectionClosedError,
       Bunny::NetworkFailure,
       IOError,
     ].freeze
+
+    ##
 
     # Creates a new publisher for the specified exchange.
     #
@@ -76,6 +82,10 @@ module Ears
     attr_reader :exchange_name, :exchange_type, :exchange_options
 
     def publish_with_channel(data:, routing_key:, publish_options:)
+      unless Ears.connection.open?
+        raise PublishToStaleChannelError, 'Connection is not open'
+      end
+
       PublisherChannelPool.with_channel do |channel|
         exchange = create_exchange(channel)
         exchange.publish(
@@ -114,7 +124,6 @@ module Ears
           raise original_error
         end
 
-        # puts "Waiting for connection. Attempt #{connection_attempt} of #{Ears.configuration.publisher_connection_attempts}"
         sleep(connection_backoff_delay(connection_attempt))
       end
     end
