@@ -108,6 +108,9 @@ RSpec.describe Ears::Publisher do
         publisher_connection_attempts: 3,
         publisher_connection_base_delay: 0.1,
         publisher_connection_backoff_factor: 2.0,
+        publisher_max_retries: 3,
+        publisher_retry_base_delay: 0.1,
+        publisher_retry_backoff_factor: 2.0,
       )
       allow(Ears::PublisherChannelPool).to receive(:reset!)
       allow(publisher).to receive(:sleep)
@@ -300,14 +303,14 @@ RSpec.describe Ears::Publisher do
         allow(mock_exchange).to receive(:publish).and_raise(error)
       end
 
-      it 'does not retry and raises immediately' do
+      it 'retries according to publisher_max_retries and then raises' do
         expect {
           publisher.publish(data, routing_key: routing_key)
         }.to raise_error(StandardError, 'Invalid data')
 
-        expect(mock_exchange).to have_received(:publish).once
+        expect(mock_exchange).to have_received(:publish).exactly(3).times
         expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
-        expect(publisher).not_to have_received(:sleep)
+        expect(publisher).to have_received(:sleep).twice
       end
     end
   end

@@ -70,8 +70,8 @@ RSpec.describe Ears::Configuration do
     end
 
     describe '#publisher_retry_base_delay' do
-      it 'has a default value of 2' do
-        expect(configuration.publisher_retry_base_delay).to eq(2)
+      it 'has a default value of 0.1' do
+        expect(configuration.publisher_retry_base_delay).to eq(0.1)
       end
 
       it 'allows setting the value' do

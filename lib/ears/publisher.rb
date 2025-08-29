@@ -13,7 +13,7 @@ module Ears
     end
 
     # Connection errors that should trigger retries
-    RETRYABLE_ERRORS = [
+    CONNECTION_ERRORS = [
       PublishToStaleChannelError,
       Bunny::ConnectionClosedError,
       Bunny::NetworkFailure,
@@ -58,14 +58,23 @@ module Ears
     def publish(data, routing_key:, **options)
       publish_options = default_publish_options.merge(options)
 
+      attempt = 1
+
       begin
         publish_with_channel(data:, routing_key:, publish_options:)
-      rescue *RETRYABLE_ERRORS => e
+      rescue *CONNECTION_ERRORS => e
         connect_after_error(e)
 
         PublisherChannelPool.reset!
 
         publish_with_channel(data:, routing_key:, publish_options:)
+      rescue StandardError => e
+        attempt += 1
+
+        raise e if attempt > Ears.configuration.publisher_max_retries
+
+        sleep(retry_backoff_delay(attempt))
+        retry
       end
     end
 
@@ -126,6 +135,12 @@ module Ears
 
         sleep(connection_backoff_delay(connection_attempt))
       end
+    end
+
+    def retry_backoff_delay(attempt)
+      config = Ears.configuration
+      config.publisher_retry_base_delay *
+        (config.publisher_retry_backoff_factor**(attempt - 1))
     end
 
     def connection_backoff_delay(attempt)
