@@ -151,6 +151,44 @@ RSpec.describe Ears::Configuration do
     end
   end
 
+  describe '#logger' do
+    context 'with default logger' do
+      it 'has a default logger' do
+        expect(configuration.logger).to be_a(Logger)
+      end
+
+      it 'writes to IO::NULL' do
+        expect do
+          configuration.logger.info('test message')
+        end.not_to output.to_stdout
+      end
+
+      it 'responds to standard logging methods' do
+        logger = configuration.logger
+
+        expect(logger).to respond_to(:debug)
+        expect(logger).to respond_to(:info)
+        expect(logger).to respond_to(:warn)
+        expect(logger).to respond_to(:error)
+        expect(logger).to respond_to(:fatal)
+      end
+    end
+
+    context 'with custom logger' do
+      let(:output) { StringIO.new }
+      let(:custom_logger) { Logger.new(output) }
+
+      before { configuration.logger = custom_logger }
+
+      it { expect(configuration.logger).to eq(custom_logger) }
+
+      it 'writes to the custom logger output' do
+        configuration.logger.info('test message')
+        expect(output.string).to include('test message')
+      end
+    end
+  end
+
   describe '#validate!' do
     it 'returns nil on valid configuration' do
       configuration.connection_name = 'test'

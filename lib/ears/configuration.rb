@@ -1,4 +1,5 @@
 require 'ears/errors'
+require 'logger'
 
 module Ears
   # The class representing the global {Ears} configuration.
@@ -53,6 +54,9 @@ module Ears
     # @return [Float] the backoff factor for exponential retry delays
     attr_accessor :publisher_retry_backoff_factor
 
+    # @return [Logger] the logger instance for Ears operations
+    attr_accessor :logger
+
     def initialize
       @rabbitmq_url = DEFAULT_RABBITMQ_URL
       @recovery_attempts = DEFAULT_RECOVERY_ATTEMPTS
@@ -65,6 +69,7 @@ module Ears
       @publisher_max_retries = DEFAULT_PUBLISHER_MAX_RETRIES
       @publisher_retry_base_delay = DEFAULT_PUBLISHER_RETRY_BASE_DELAY
       @publisher_retry_backoff_factor = DEFAULT_PUBLISHER_RETRY_BACKOFF_FACTOR
+      @logger = Logger.new(IO::NULL)
     end
 
     # @return [Proc] that is passed to Bunny’s recovery_attempts_exhausted block. Nil if recovery_attempts is nil.
