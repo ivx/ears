@@ -131,12 +131,7 @@ RSpec.describe Ears::Publisher do
     context 'when connection is closed on first attempt (proactive check)' do
       before do
         # Connection is closed initially, then recovers after one retry attempt
-        allow(connection).to receive(:open?).and_return(
-          false,
-          false,
-          true,
-          true,
-        )
+        allow(connection).to receive(:open?).and_return(false, false, true)
         allow(Ears::PublisherChannelPool).to receive(:reset!)
       end
 
@@ -152,10 +147,12 @@ RSpec.describe Ears::Publisher do
 
         expect(mock_exchange).to have_received(:publish).once
       end
+    end
 
-      it 'never attempts to publish when connection is closed' do
-        allow(connection).to receive(:open?).and_return(false)
+    context 'when connection is permanently closed' do
+      before { allow(connection).to receive(:open?).and_return(false) }
 
+      it 'never attempts to publish' do
         expect {
           publisher.publish(data, routing_key: routing_key)
         }.to raise_error(Ears::Publisher::PublishToStaleChannelError)
@@ -164,7 +161,7 @@ RSpec.describe Ears::Publisher do
       end
     end
 
-    context 'when connection recovers immediately' do
+    context 'when connection immediately recovers after failed publish' do
       before do
         allow(connection).to receive(:open?).and_return(true)
         call_count = 0
@@ -187,7 +184,7 @@ RSpec.describe Ears::Publisher do
         expect(mock_exchange).to have_received(:publish).twice
       end
 
-      it 'does not sleep when connection is already open' do
+      it 'does not delay the second attempt' do
         publisher.publish(data, routing_key: routing_key)
         expect(publisher).not_to have_received(:sleep)
       end
@@ -197,6 +194,7 @@ RSpec.describe Ears::Publisher do
       before do
         allow(connection).to receive(:open?).and_return(
           true,
+          false,
           false,
           false,
           true,
@@ -213,13 +211,14 @@ RSpec.describe Ears::Publisher do
 
       it 'waits for connection to recover' do
         publisher.publish(data, routing_key: routing_key)
-        expect(publisher).to have_received(:sleep).twice
+        expect(publisher).to have_received(:sleep).exactly(3).times
       end
 
       it 'uses exponential backoff for connection delays' do
         publisher.publish(data, routing_key: routing_key)
         expect(publisher).to have_received(:sleep).with(0.1).ordered
         expect(publisher).to have_received(:sleep).with(0.2).ordered
+        expect(publisher).to have_received(:sleep).with(0.4).ordered
       end
 
       it 'publishes after connection recovers' do
