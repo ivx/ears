@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.21.0.beta.3 (2025-08-29)
+
+- **[Experimental]**: Add publisher connection resilience for RabbitMQ rolling updates
+- **[Experimental]**: Implement proactive connection checking to avoid timeouts during connection failures
+- **[Experimental]**: Add configurable exponential backoff for connection recovery
+
 ## 0.21.0.beta.2 (2025-08-26)
 
 - **[Experimental]**: Remove JSON parsing from `Ears::Publisher`

@@ -9,14 +9,18 @@ module Ears
   # Uses a connection pool for thread-safe publishing with configurable pool size.
   # This provides better performance and thread safety compared to using per-thread channels.
   class Publisher
-    # Error that is raised when publishing fails
-    class PublishError < StandardError
-      def initialize(exchange_name, routing_key, error)
-        super(
-          "Failed to publish to exchange '#{exchange_name}' with routing key '#{routing_key}': #{error.message}",
-        )
-      end
+    class PublishToStaleChannelError < StandardError
     end
+
+    # Connection errors that should trigger retries
+    CONNECTION_ERRORS = [
+      PublishToStaleChannelError,
+      Bunny::ConnectionClosedError,
+      Bunny::NetworkFailure,
+      IOError,
+    ].freeze
+
+    ##
 
     # Creates a new publisher for the specified exchange.
     #
@@ -54,15 +58,24 @@ module Ears
     def publish(data, routing_key:, **options)
       publish_options = default_publish_options.merge(options)
 
-      PublisherChannelPool.with_channel do |channel|
-        exchange = create_exchange(channel)
-        exchange.publish(
-          data,
-          { routing_key: routing_key }.merge(publish_options),
-        )
+      attempt = 1
+
+      begin
+        publish_with_channel(data:, routing_key:, publish_options:)
+      rescue *CONNECTION_ERRORS => e
+        connect_after_error(e)
+
+        PublisherChannelPool.reset!
+
+        publish_with_channel(data:, routing_key:, publish_options:)
+      rescue StandardError => e
+        attempt += 1
+
+        raise e if attempt > Ears.configuration.publisher_max_retries
+
+        sleep(retry_backoff_delay(attempt))
+        retry
       end
-    rescue => e
-      raise PublishError.new(exchange_name, routing_key, e)
     end
 
     # Resets the channel pool, forcing new channels to be created.
@@ -76,6 +89,20 @@ module Ears
     private
 
     attr_reader :exchange_name, :exchange_type, :exchange_options
+
+    def publish_with_channel(data:, routing_key:, publish_options:)
+      unless Ears.connection.open?
+        raise PublishToStaleChannelError, 'Connection is not open'
+      end
+
+      PublisherChannelPool.with_channel do |channel|
+        exchange = create_exchange(channel)
+        exchange.publish(
+          data,
+          { routing_key: routing_key }.merge(publish_options),
+        )
+      end
+    end
 
     def create_exchange(channel)
       Bunny::Exchange.new(
@@ -94,6 +121,32 @@ module Ears
         },
         content_type: 'application/json',
       }
+    end
+
+    def connect_after_error(original_error)
+      connection_attempt = 0
+
+      while !Ears.connection.open?
+        connection_attempt += 1
+
+        if connection_attempt > Ears.configuration.publisher_connection_attempts
+          raise original_error
+        end
+
+        sleep(connection_backoff_delay(connection_attempt))
+      end
+    end
+
+    def retry_backoff_delay(attempt)
+      config = Ears.configuration
+      config.publisher_retry_base_delay *
+        (config.publisher_retry_backoff_factor**(attempt - 1))
+    end
+
+    def connection_backoff_delay(attempt)
+      config = Ears.configuration
+      config.publisher_connection_base_delay *
+        (config.publisher_connection_backoff_factor**(attempt - 1))
     end
   end
 end
