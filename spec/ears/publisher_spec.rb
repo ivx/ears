@@ -111,6 +111,7 @@ RSpec.describe Ears::Publisher do
         publisher_max_retries: 3,
         publisher_retry_base_delay: 0.1,
         publisher_retry_backoff_factor: 2.0,
+        logger: Logger.new(IO::NULL),
       )
       allow(Ears::PublisherChannelPool).to receive(:reset!)
       allow(publisher).to receive(:sleep)

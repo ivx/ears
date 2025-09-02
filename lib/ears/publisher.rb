@@ -31,6 +31,8 @@ module Ears
       @exchange_name = exchange_name
       @exchange_type = exchange_type
       @exchange_options = { durable: true }.merge(exchange_options)
+      @config = Ears.configuration
+      @logger = Ears.configuration.logger
     end
 
     # Publishes a JSON message to the configured exchange.
@@ -65,13 +67,14 @@ module Ears
       rescue *CONNECTION_ERRORS => e
         connect_after_error(e)
 
+        logger.info('Resetting channel pool after connection recovery')
         PublisherChannelPool.reset!
 
         publish_with_channel(data:, routing_key:, publish_options:)
       rescue StandardError => e
         attempt += 1
 
-        raise e if attempt > Ears.configuration.publisher_max_retries
+        raise e if attempt > config.publisher_max_retries
 
         sleep(retry_backoff_delay(attempt))
         retry
@@ -88,7 +91,11 @@ module Ears
 
     private
 
-    attr_reader :exchange_name, :exchange_type, :exchange_options
+    attr_reader :exchange_name,
+                :exchange_type,
+                :exchange_options,
+                :config,
+                :logger
 
     def publish_with_channel(data:, routing_key:, publish_options:)
       unless Ears.connection.open?
@@ -126,10 +133,16 @@ module Ears
     def connect_after_error(original_error)
       connection_attempt = 0
 
+      logger.info('Trying to reconnect after connection error')
       while !Ears.connection.open?
+        logger.info(
+          "Connection still closed, attempt #{connection_attempt + 1}",
+        )
         connection_attempt += 1
 
-        if connection_attempt > Ears.configuration.publisher_connection_attempts
+        if connection_attempt > config.publisher_connection_attempts
+          logger.error('Connection attempts exhausted, giving up')
+
           raise original_error
         end
 
@@ -138,13 +151,11 @@ module Ears
     end
 
     def retry_backoff_delay(attempt)
-      config = Ears.configuration
       config.publisher_retry_base_delay *
         (config.publisher_retry_backoff_factor**(attempt - 1))
     end
 
     def connection_backoff_delay(attempt)
-      config = Ears.configuration
       config.publisher_connection_base_delay *
         (config.publisher_connection_backoff_factor**(attempt - 1))
     end
