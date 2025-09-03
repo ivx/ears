@@ -10,9 +10,13 @@ module Ears
     # Connection errors that should trigger retries
     CONNECTION_ERRORS = [
       PublishToStaleChannelError,
+      Bunny::ChannelAlreadyClosed,
       Bunny::ConnectionClosedError,
+      Bunny::ConnectionForced,
       Bunny::NetworkFailure,
+      Bunny::TCPConnectionFailed,
       IOError,
+      Timeout::Error,
     ].freeze
 
     def initialize(config, logger)
