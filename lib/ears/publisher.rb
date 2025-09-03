@@ -1,5 +1,6 @@
 require 'bunny'
 require 'ears/publisher_channel_pool'
+require 'ears/publisher_retry_handler'
 
 module Ears
   # Publisher for sending messages to RabbitMQ exchanges.
@@ -9,19 +10,6 @@ module Ears
   # Uses a connection pool for thread-safe publishing with configurable pool size.
   # This provides better performance and thread safety compared to using per-thread channels.
   class Publisher
-    class PublishToStaleChannelError < StandardError
-    end
-
-    # Connection errors that should trigger retries
-    CONNECTION_ERRORS = [
-      PublishToStaleChannelError,
-      Bunny::ConnectionClosedError,
-      Bunny::NetworkFailure,
-      IOError,
-    ].freeze
-
-    ##
-
     # Creates a new publisher for the specified exchange.
     #
     # @param [String] exchange_name The name of the exchange to publish to.
@@ -60,24 +48,8 @@ module Ears
     def publish(data, routing_key:, **options)
       publish_options = default_publish_options.merge(options)
 
-      attempt = 1
-
-      begin
+      retry_handler.run do
         publish_with_channel(data:, routing_key:, publish_options:)
-      rescue *CONNECTION_ERRORS => e
-        connect_after_error(e)
-
-        logger.info('Resetting channel pool after connection recovery')
-        PublisherChannelPool.reset!
-
-        publish_with_channel(data:, routing_key:, publish_options:)
-      rescue StandardError => e
-        attempt += 1
-
-        raise e if attempt > config.publisher_max_retries
-
-        sleep(retry_backoff_delay(attempt))
-        retry
       end
     end
 
@@ -99,7 +71,8 @@ module Ears
 
     def publish_with_channel(data:, routing_key:, publish_options:)
       unless Ears.connection.open?
-        raise PublishToStaleChannelError, 'Connection is not open'
+        raise PublisherRetryHandler::PublishToStaleChannelError,
+              'Connection is not open'
       end
 
       PublisherChannelPool.with_channel do |channel|
@@ -130,34 +103,8 @@ module Ears
       }
     end
 
-    def connect_after_error(original_error)
-      connection_attempt = 0
-
-      logger.info('Trying to reconnect after connection error')
-      while !Ears.connection.open?
-        logger.info(
-          "Connection still closed, attempt #{connection_attempt + 1}",
-        )
-        connection_attempt += 1
-
-        if connection_attempt > config.publisher_connection_attempts
-          logger.error('Connection attempts exhausted, giving up')
-
-          raise original_error
-        end
-
-        sleep(connection_backoff_delay(connection_attempt))
-      end
-    end
-
-    def retry_backoff_delay(attempt)
-      config.publisher_retry_base_delay *
-        (config.publisher_retry_backoff_factor**(attempt - 1))
-    end
-
-    def connection_backoff_delay(attempt)
-      config.publisher_connection_base_delay *
-        (config.publisher_connection_backoff_factor**(attempt - 1))
+    def retry_handler
+      @retry_handler ||= PublisherRetryHandler.new(config, logger)
     end
   end
 end
