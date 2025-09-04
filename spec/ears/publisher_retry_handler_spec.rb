@@ -318,12 +318,12 @@ RSpec.describe Ears::PublisherRetryHandler do
 
       before { allow(mock_connection).to receive(:open?).and_return(true) }
 
-      it 'handles connection error but raises standard error immediately' do
-        expect { handler.run(&complex_block) }.to raise_error(standard_error)
+      it 'retries both connection and standard errors and eventually succeeds' do
+        result = handler.run(&complex_block)
 
-        expect(Ears::PublisherChannelPool).to have_received(:reset!)
-
-        expect(handler).not_to have_received(:sleep)
+        expect(result).to eq('finally success')
+        expect(Ears::PublisherChannelPool).to have_received(:reset!).once
+        expect(handler).to have_received(:sleep).once
       end
     end
   end

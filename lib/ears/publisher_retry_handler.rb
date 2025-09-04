@@ -29,15 +29,11 @@ module Ears
       begin
         block.call
       rescue *CONNECTION_ERRORS => e
-        handle_connection_error(e, &block)
+        attempt = handle_connection_error(e, attempt) # rubocop:disable Lint/UselessAssignment
+        retry
       rescue StandardError => e
-        if retry?(e, attempt)
-          sleep(retry_backoff_delay(attempt)) if attempt > 1
-          attempt += 1
-          retry
-        end
-
-        raise(e)
+        attempt = handle_standard_error(e, attempt)
+        retry
       end
     end
 
@@ -45,11 +41,21 @@ module Ears
 
     attr_reader :config, :logger
 
-    def handle_connection_error(error, &block)
+    def handle_connection_error(error, attempt)
+      raise(error) unless retry?(error, attempt)
+
       wait_for_connection(error)
       logger.info('Resetting channel pool after connection recovery')
       PublisherChannelPool.reset!
-      block.call
+
+      attempt + 1
+    end
+
+    def handle_standard_error(error, attempt)
+      raise(error) unless retry?(error, attempt)
+
+      sleep(retry_backoff_delay(attempt)) if attempt > 1
+      attempt + 1
     end
 
     def retry?(error, attempt)
