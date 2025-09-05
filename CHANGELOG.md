@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.21.0.beta.4 (2025-09-04)
+
+- Introduce configurable logger
+- Recover from StandardErrors happening immediately after connection failure
+
 ## 0.21.0.beta.3 (2025-08-29)
 
 - **[Experimental]**: Add publisher connection resilience for RabbitMQ rolling updates
