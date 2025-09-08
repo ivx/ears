@@ -1,6 +1,6 @@
 # Ears
 
-`Ears` is a small, simple library for writing RabbitMQ consumers.
+`Ears` is a small, simple library for writing RabbitMQ consumers and publishers.
 
 [![CodeQL](https://github.com/ivx/ears/actions/workflows/codeql.yml/badge.svg)](https://github.com/ivx/ears/actions/workflows/codeql.yml)
 
@@ -22,7 +22,182 @@ Or install it yourself as:
 
 ## Usage
 
-### Basic usage
+### Publishing Messages
+
+`Ears` provides a thread-safe publisher for sending messages to RabbitMQ exchanges with automatic retry and connection recovery capabilities.
+
+#### Basic Publisher Usage
+
+To publish messages, create an `Ears::Publisher` instance and call `publish`:
+
+```ruby
+require 'ears'
+
+# Configure Ears (same configuration is shared by consumers and publishers)
+Ears.configure do |config|
+  config.rabbitmq_url = 'amqp://user:password@myrmq:5672'
+  config.connection_name = 'My Publisher'
+end
+
+# Create a publisher for a topic exchange
+publisher = Ears::Publisher.new('my_exchange', :topic, durable: true)
+
+# Publish a message
+data = { user_id: 123, action: 'login', timestamp: Time.now.iso8601 }
+publisher.publish(data, routing_key: 'user.login')
+```
+
+#### Exchange Types and Options
+
+Publishers support all RabbitMQ exchange types:
+
+```ruby
+# Topic exchange (default)
+topic_publisher = Ears::Publisher.new('events', :topic)
+
+# Direct exchange
+direct_publisher = Ears::Publisher.new('commands', :direct)
+
+# Fanout exchange
+fanout_publisher = Ears::Publisher.new('broadcasts', :fanout)
+
+# Headers exchange
+headers_publisher = Ears::Publisher.new('complex_routing', :headers)
+
+# Custom exchange options
+publisher =
+  Ears::Publisher.new(
+    'my_exchange',
+    :topic,
+    durable: true,
+    auto_delete: false,
+    arguments: {
+      'x-message-ttl' => 60_000,
+    },
+  )
+```
+
+#### Message Options
+
+The `publish` method accepts various message options:
+
+```ruby
+publisher.publish(
+  { message: 'Hello World' },
+  routing_key: 'greeting.hello',
+  persistent: true, # Persist message to disk (default: true)
+  headers: {
+    version: '1.0',
+  }, # Custom headers
+  timestamp: Time.now.to_i, # Message timestamp (default: current time)
+  message_id: SecureRandom.uuid, # Unique message identifier
+  correlation_id: 'abc-123', # Correlation ID for request/response patterns
+  reply_to: 'response_queue', # Queue for responses
+  expiration: '60000', # Message TTL in milliseconds
+  priority: 5, # Message priority (0-9)
+  type: 'user_event', # Message type
+  app_id: 'my_application', # Application identifier
+  user_id: 'system', # User identifier (verified by RabbitMQ)
+)
+```
+
+#### Thread-Safe Publishing
+
+Publishers use a connection pool for thread-safe operation, making them suitable for concurrent use:
+
+```ruby
+# Single publisher can be safely used across multiple threads
+publisher = Ears::Publisher.new('events', :topic)
+
+# Example with multiple threads
+threads =
+  10.times.map do |i|
+    Thread.new do
+      100.times do |j|
+        publisher.publish({ thread: i, message: j }, routing_key: "thread.#{i}")
+      end
+    end
+  end
+
+threads.each(&:join)
+```
+
+#### Publisher Configuration
+
+Publisher behavior can be fine-tuned through configuration options:
+
+```ruby
+Ears.configure do |config|
+  # Connection settings
+  config.rabbitmq_url = 'amqp://user:password@myrmq:5672'
+  config.connection_name = 'My Application'
+
+  # Publisher-specific settings
+  config.publisher_pool_size = 32 # Channel pool size (default: 32)
+  config.publisher_pool_timeout = 2 # Pool checkout timeout in seconds (default: 2)
+
+  # Connection retry settings
+  config.publisher_connection_attempts = 30 # Connection retry attempts (default: 30)
+  config.publisher_connection_base_delay = 1 # Base delay between connection attempts (default: 1s)
+  config.publisher_connection_backoff_factor = 1.5 # Connection backoff multiplier (default: 1.5)
+
+  # Publish retry settings
+  config.publisher_max_retries = 3 # Max publish retry attempts (default: 3)
+  config.publisher_retry_base_delay = 0.1 # Base delay between publish retries (default: 0.1s)
+  config.publisher_retry_backoff_factor = 2 # Publish retry backoff multiplier (default: 2)
+end
+```
+
+#### Fault Tolerance and Recovery
+
+Publishers automatically handle connection failures and provide several recovery mechanisms:
+
+##### Automatic Retry with Exponential Backoff
+
+```ruby
+# Publishers automatically retry failed operations
+publisher = Ears::Publisher.new('events', :topic)
+
+# This will automatically retry with exponential backoff if the connection fails
+publisher.publish({ event: 'user_signup' }, routing_key: 'user.signup')
+```
+
+##### Manual Recovery
+
+If you need to manually reset the connection pool (e.g., after detecting connection issues):
+
+```ruby
+publisher = Ears::Publisher.new('events', :topic)
+
+# Reset the channel pool to force new connections
+publisher.reset!
+
+# Subsequent publishes will use fresh channels
+publisher.publish({ event: 'recovery_test' }, routing_key: 'system.recovery')
+```
+
+##### Error Handling
+
+Publishers raise specific exceptions that you can handle:
+
+```ruby
+require 'ears'
+
+publisher = Ears::Publisher.new('events', :topic)
+
+begin
+  publisher.publish({ data: 'test' }, routing_key: 'test.message')
+rescue Ears::PublisherRetryHandler::PublishError => e
+  # Handle publish failures (after all retries exhausted)
+  logger.error "Failed to publish message: #{e.message}"
+  # Consider queuing message for later retry or alerting
+rescue => e
+  # Handle other unexpected errors
+  logger.error "Unexpected error: #{e.message}"
+end
+```
+
+### Basic consumer usage
 
 First, you should configure `Ears`.
 
@@ -34,6 +209,16 @@ Ears.configure do |config|
   config.connection_name = 'My Consumer'
   config.recover_from_connection_close = false # optional configuration, defaults to true if not set
   config.recovery_attempts = 3 # optional configuration, defaults to 10, Bunny::Session would have been nil
+
+  # Publisher configuration (optional)
+  config.publisher_pool_size = 32 # Thread pool size for publishers (default: 32)
+  config.publisher_pool_timeout = 2 # Timeout for pool checkout in seconds (default: 2)
+  config.publisher_connection_attempts = 30 # Connection retry attempts (default: 30)
+  config.publisher_connection_base_delay = 1 # Base delay between connection attempts in seconds (default: 1)
+  config.publisher_connection_backoff_factor = 1.5 # Connection retry backoff multiplier (default: 1.5)
+  config.publisher_max_retries = 3 # Max publish retry attempts (default: 3)
+  config.publisher_retry_base_delay = 0.1 # Base delay between publish retries in seconds (default: 0.1)
+  config.publisher_retry_backoff_factor = 2 # Publish retry backoff multiplier (default: 2)
 end
 ```
 
@@ -284,6 +469,84 @@ Ears.stop!
 ```
 
 It will close and reset the current Bunny connection, leading to all consumers being shut down. Also, it will reset the channel.
+
+### Complete Example: Consumer and Publisher
+
+Here's a complete example showing both consumer and publisher usage:
+
+```ruby
+require 'ears'
+
+# Shared configuration
+Ears.configure do |config|
+  config.rabbitmq_url = 'amqp://guest:guest@localhost:5672'
+  config.connection_name = 'Order Processing Service'
+  config.publisher_pool_size = 16
+end
+
+# Consumer that processes orders and publishes events
+class OrderProcessor < Ears::Consumer
+  configure(
+    queue: 'orders',
+    exchange: 'ecommerce',
+    routing_keys: %w[order.created order.updated],
+    retry_queue: true,
+    error_queue: true,
+  )
+
+  def initialize
+    super
+    @event_publisher = Ears::Publisher.new('events', :topic, durable: true)
+  end
+
+  def work(delivery_info, metadata, payload)
+    order = JSON.parse(payload)
+
+    # Process the order
+    process_order(order)
+
+    # Publish success event
+    @event_publisher.publish(
+      {
+        order_id: order['id'],
+        status: 'processed',
+        processed_at: Time.now.iso8601,
+      },
+      routing_key: 'order.processed',
+    )
+
+    ack
+  rescue => error
+    # Publish error event
+    @event_publisher.publish(
+      {
+        order_id: order&.dig('id'),
+        error: error.message,
+        failed_at: Time.now.iso8601,
+      },
+      routing_key: 'order.failed',
+    )
+
+    reject # Send to error queue
+  end
+
+  private
+
+  def process_order(order)
+    # Order processing logic here
+    sleep(0.1) # Simulate processing time
+  end
+end
+
+# Setup and run
+Ears.setup { Ears.setup_consumers(OrderProcessor) }
+
+begin
+  Ears.run!
+ensure
+  # Cleanup code here
+end
+```
 
 ## Documentation
 

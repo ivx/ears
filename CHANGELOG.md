@@ -1,23 +1,9 @@
 # Changelog
 
-## 0.21.0.beta.4 (2025-09-04)
+## 0.21.0 (2025-09-08)
 
+- Introduce Ears::Publisher with thread-safe channel pooling
 - Introduce configurable logger
-- Recover from StandardErrors happening immediately after connection failure
-
-## 0.21.0.beta.3 (2025-08-29)
-
-- **[Experimental]**: Add publisher connection resilience for RabbitMQ rolling updates
-- **[Experimental]**: Implement proactive connection checking to avoid timeouts during connection failures
-- **[Experimental]**: Add configurable exponential backoff for connection recovery
-
-## 0.21.0.beta.2 (2025-08-26)
-
-- **[Experimental]**: Remove JSON parsing from `Ears::Publisher`
-
-## 0.21.0.beta.1 (2025-08-21)
-
-- **[Experimental]**: Introduce Ears::Publisher with thread-safe channel pooling - do not use in production environments
 
 ## 0.20.0 (2025-06-02)
 
