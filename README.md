@@ -548,6 +548,115 @@ ensure
 end
 ```
 
+## Testing
+
+Ears provides testing helpers to easily test your message publishing without connecting to RabbitMQ.
+
+### Basic Setup
+
+Include the test helper in your RSpec tests and mock the exchanges you want to test:
+
+```ruby
+require 'ears/testing'
+
+RSpec.describe MyService do
+  include Ears::Testing::TestHelper
+
+  before do
+    # Mock exchanges that your code will publish to
+    mock_ears('events', 'notifications')
+  end
+
+  after do
+    # Clean up mocks and captured messages
+    ears_reset!
+  end
+end
+```
+
+### Capturing and Inspecting Messages
+
+Use the helper methods to inspect published messages:
+
+```ruby
+it 'publishes user creation event' do
+  service = UserService.new
+  service.create_user(name: 'John', email: 'john@example.com')
+
+  # Get all messages published to 'events' exchange
+  messages = published_messages('events')
+  expect(messages.size).to eq(1)
+
+  # Inspect the message
+  message = messages.first
+  expect(message.routing_key).to eq('user.created')
+  expect(message.data).to include(name: 'John')
+  expect(message.options[:headers]).to include(version: '1.0')
+end
+```
+
+### Available Helper Methods
+
+- `published_messages(exchange_name = nil)` - Get messages for a specific exchange or all messages
+- `last_published_message(exchange_name = nil)` - Get the most recent message
+- `clear_published_messages` - Clear captured messages during a test
+
+### Message Properties
+
+Each captured message has the following properties:
+
+- `exchange_name` - Name of the exchange
+- `routing_key` - Message routing key
+- `data` - The message payload
+- `options` - Publishing options (headers, persistent, etc.)
+- `timestamp` - When the message was captured
+- `thread_id` - Thread that published the message
+
+### Error Handling
+
+By default, publishing to unmocked exchanges raises an error:
+
+```ruby
+it 'raises error for unmocked exchanges' do
+  publisher = Ears::Publisher.new('unmocked_exchange')
+
+  expect {
+    publisher.publish({ data: 'test' }, routing_key: 'test')
+  }.to raise_error(Ears::Testing::UnmockedExchangeError)
+end
+```
+
+### Complete Example
+
+```ruby
+require 'ears/testing'
+
+RSpec.describe OrderProcessor do
+  include Ears::Testing::TestHelper
+
+  before { mock_ears('events', 'notifications') }
+  after { ears_reset! }
+
+  it 'publishes events when processing order' do
+    processor = OrderProcessor.new
+    order = { id: 123, items: ['item1'], total: 99.99 }
+
+    processor.process(order)
+
+    # Check event was published
+    events = published_messages('events')
+    expect(events.size).to eq(1)
+    expect(events.first.routing_key).to eq('order.processed')
+    expect(events.first.data[:order_id]).to eq(123)
+
+    # Check notification was sent
+    notifications = published_messages('notifications')
+    expect(notifications.size).to eq(1)
+    expect(notifications.first.routing_key).to eq('email.order_confirmation')
+  end
+end
+```
+
 ## Documentation
 
 If you need more in-depth information, look at [our API documentation](https://www.rubydoc.info/gems/ears).
