@@ -5,7 +5,10 @@ require 'ears/publisher'
 RSpec.describe 'Ears Testing Integration' do # rubocop:disable RSpec/DescribeClass
   include Ears::Testing::TestHelper
 
-  before { mock_ears('events', 'notifications') }
+  before do
+    Ears.configuration.publisher_max_retries = 0
+    mock_ears('events', 'notifications')
+  end
 
   after { ears_reset! }
 
