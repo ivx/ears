@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.1 (2025-09-09)
+
+- Add testing abstractions: `Ears::Testing::TestHelper`, `Ears::Testing::MessageCapture`, and `Ears::Testing::PublisherMock`
+
 ## 0.21.0 (2025-09-08)
 
 - Introduce Ears::Publisher with thread-safe channel pooling
