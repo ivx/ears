@@ -236,4 +236,66 @@ RSpec.describe Ears::PublisherChannelPool do
       expect(mock_channel).to have_received(:close)
     end
   end
+
+  describe '.reset_confirms_pool!' do
+    before do
+      allow(ConnectionPool).to receive(:new).and_return(
+        mock_standard_pool,
+        mock_confirms_pool,
+      )
+      allow(mock_standard_pool).to receive(:with)
+      allow(mock_confirms_pool).to receive(:with)
+
+      # Create both pools
+      described_class.with_channel(confirms: false) { |_channel| nil }
+      described_class.with_channel(confirms: true) { |_channel| nil }
+    end
+
+    it 'resets only the confirms pool instance variable' do
+      described_class.reset_confirms_pool!
+
+      expect(described_class.instance_variable_get(:@standard_pool)).to eq(
+        mock_standard_pool,
+      )
+      expect(described_class.instance_variable_get(:@confirms_pool)).to be_nil
+    end
+
+    it 'calls shutdown on confirms pool with close block' do
+      expect(mock_confirms_pool).to receive(:shutdown).and_yield(mock_channel)
+
+      described_class.reset_confirms_pool!
+
+      expect(mock_channel).to have_received(:close)
+    end
+
+    it 'does not affect standard pool' do
+      expect(mock_standard_pool).not_to receive(:shutdown)
+
+      described_class.reset_confirms_pool!
+    end
+
+    it 'creates new confirms pool after reset' do
+      described_class.reset_confirms_pool!
+
+      new_mock_confirms_pool = instance_double(ConnectionPool, with: nil)
+      allow(ConnectionPool).to receive(:new).and_return(new_mock_confirms_pool)
+
+      described_class.with_channel(confirms: true) { |_channel| nil }
+
+      expect(ConnectionPool).to have_received(:new).exactly(3).times
+    end
+
+    it 'handles reset when only standard pool exists' do
+      described_class.instance_variable_set(:@confirms_pool, nil)
+
+      expect { described_class.reset_confirms_pool! }.not_to raise_error
+    end
+
+    it 'handles reset when no pools exist' do
+      described_class.instance_variable_set(:@standard_pool, nil)
+      described_class.instance_variable_set(:@confirms_pool, nil)
+
+      expect { described_class.reset_confirms_pool! }.not_to raise_error
+    end
+  end
 end

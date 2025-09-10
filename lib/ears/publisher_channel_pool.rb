@@ -35,6 +35,18 @@ module Ears
         nil
       end
 
+      # Resets only the confirms channel pool, forcing new confirmed channels to be created.
+      # This is useful when confirmation failures occur and channels may have contaminated state.
+      #
+      # @return [void]
+      def reset_confirms_pool!
+        cnf_pool = @confirms_pool
+        @confirms_pool = nil
+
+        cnf_pool&.shutdown(&:close)
+        nil
+      end
+
       private
 
       def standard_pool

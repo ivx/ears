@@ -327,4 +327,45 @@ RSpec.describe Ears::PublisherRetryHandler do
       end
     end
   end
+
+  describe 'non-retryable error handling' do
+    it 'does not retry PublishConfirmationTimeout errors' do
+      error = Ears::PublishConfirmationTimeout.new('Timeout after 5s')
+
+      expect { handler.run { raise error } }.to raise_error(
+        Ears::PublishConfirmationTimeout,
+        'Timeout after 5s',
+      )
+
+      expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
+      expect(handler).not_to have_received(:sleep)
+      expect(logger).not_to have_received(:info)
+    end
+
+    it 'does not retry PublishNacked errors' do
+      error = Ears::PublishNacked.new('Message nacked')
+
+      expect { handler.run { raise error } }.to raise_error(
+        Ears::PublishNacked,
+        'Message nacked',
+      )
+
+      expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
+      expect(handler).not_to have_received(:sleep)
+      expect(logger).not_to have_received(:info)
+    end
+
+    it 'does not retry BatchSizeExceeded errors' do
+      error = Ears::BatchSizeExceeded.new('Batch too large')
+
+      expect { handler.run { raise error } }.to raise_error(
+        Ears::BatchSizeExceeded,
+        'Batch too large',
+      )
+
+      expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
+      expect(handler).not_to have_received(:sleep)
+      expect(logger).not_to have_received(:info)
+    end
+  end
 end

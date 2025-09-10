@@ -39,12 +39,26 @@ module Ears
     end
 
     def handle_confirmation_failure(channel, timeout)
+      begin
+        channel.close if channel&.open?
+      rescue => e
+        warn("Failed closing channel on failed confirmation: #{e.message}")
+      end
+
+      PublisherChannelPool.reset_confirms_pool!
+
       if channel.nacked_set && !channel.nacked_set.empty?
+        warn('Publisher confirmation failed: message was nacked by broker.')
         raise PublishNacked, 'Message was nacked by broker'
       else
+        warn("Publisher confirmation failed: timeout after #{timeout}s.")
         raise PublishConfirmationTimeout,
               "Confirmation timeout after #{timeout}s"
       end
+    end
+
+    def warn(message)
+      Ears.configuration.logger.warn(message)
     end
   end
 end

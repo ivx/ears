@@ -19,6 +19,8 @@ RSpec.describe Ears::PublisherConfirmationSupport do
       Bunny::Channel,
       wait_for_confirms: true,
       nacked_set: Set.new,
+      open?: true,
+      close: nil,
     )
   end
   let(:mock_exchange) { instance_double(Bunny::Exchange) }
