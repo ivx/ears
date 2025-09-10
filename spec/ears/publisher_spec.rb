@@ -9,24 +9,31 @@ RSpec.describe Ears::Publisher do
   end
 
   let(:mock_channel) { instance_double(Bunny::Channel) }
+  let(:mock_confirms_channel) do
+    instance_double(
+      Bunny::Channel,
+      wait_for_confirms: true,
+      nacked_set: Set.new,
+    )
+  end
   let(:mock_exchange) { instance_double(Bunny::Exchange) }
   let(:routing_key) { 'test.message' }
   let(:message) { 'test message' }
+  let(:config) { Ears.configuration }
 
   before do
     mock_connection = instance_double(Bunny::Session)
     allow(mock_connection).to receive(:open?).and_return(true)
     allow(Ears).to receive(:connection).and_return(mock_connection)
 
-    allow(Ears::PublisherChannelPool).to receive(:with_channel).and_yield(
-      mock_channel,
-    )
-    allow(Bunny::Exchange).to receive(:new).with(
-      mock_channel,
-      exchange_type,
-      exchange_name,
-      { durable: true },
-    ).and_return(mock_exchange)
+    allow(Ears::PublisherChannelPool).to receive(:with_channel).with(
+      confirms: false,
+    ).and_yield(mock_channel)
+    allow(Ears::PublisherChannelPool).to receive(:with_channel).with(
+      confirms: true,
+    ).and_yield(mock_confirms_channel)
+
+    allow(Bunny::Exchange).to receive(:new).and_return(mock_exchange)
   end
 
   describe '#publish' do
@@ -326,6 +333,216 @@ RSpec.describe Ears::Publisher do
         expect(mock_exchange).to have_received(:publish).exactly(4).times
         expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
         expect(retry_handler).to have_received(:sleep).twice
+      end
+    end
+  end
+
+  describe '#publish_with_confirmation' do
+    let(:data) { { id: 1, name: 'test' } }
+    let(:timeout) { 10.0 }
+
+    before do
+      allow(mock_exchange).to receive(:publish)
+      allow(Timeout).to receive(:timeout).and_yield
+    end
+
+    it 'uses confirms channel pool' do
+      publisher.publish_with_confirmation(data, routing_key: routing_key)
+
+      expect(Ears::PublisherChannelPool).to have_received(:with_channel).with(
+        confirms: true,
+      )
+    end
+
+    it 'publishes message with correct options' do
+      publisher.publish_with_confirmation(data, routing_key: routing_key)
+
+      expected_options = {
+        routing_key: routing_key,
+        persistent: true,
+        timestamp: kind_of(Integer),
+        headers: {
+        },
+        content_type: 'application/json',
+      }
+      expect(mock_exchange).to have_received(:publish).with(
+        data,
+        expected_options,
+      )
+    end
+
+    it 'waits for confirmation with default timeout' do
+      allow(config).to receive(:publisher_confirms_timeout).and_return(5.0)
+      allow(Timeout).to receive(:timeout).with(5.0).and_yield
+
+      publisher.publish_with_confirmation(data, routing_key: routing_key)
+
+      expect(Timeout).to have_received(:timeout).with(5.0)
+      expect(mock_confirms_channel).to have_received(:wait_for_confirms)
+    end
+
+    it 'waits for confirmation with custom timeout' do
+      allow(Timeout).to receive(:timeout).with(timeout).and_yield
+
+      publisher.publish_with_confirmation(
+        data,
+        routing_key: routing_key,
+        timeout: timeout,
+      )
+
+      expect(Timeout).to have_received(:timeout).with(timeout)
+      expect(mock_confirms_channel).to have_received(:wait_for_confirms)
+    end
+
+    it 'returns successfully when confirmed' do
+      expect {
+        publisher.publish_with_confirmation(data, routing_key: routing_key)
+      }.not_to raise_error
+    end
+
+    context 'when confirmation times out' do
+      before do
+        allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
+        allow(mock_confirms_channel).to receive(:nacked_set).and_return(Set.new)
+      end
+
+      it 'raises PublishConfirmationTimeout' do
+        expect {
+          publisher.publish_with_confirmation(
+            data,
+            routing_key: routing_key,
+            timeout: timeout,
+          )
+        }.to raise_error(
+          Ears::PublishConfirmationTimeout,
+          "Confirmation timeout after #{timeout}s",
+        )
+      end
+    end
+
+    context 'when message is nacked' do
+      before do
+        allow(Timeout).to receive(:timeout).and_yield
+        allow(mock_confirms_channel).to receive_messages(
+          wait_for_confirms: false,
+          nacked_set: Set.new([1]),
+        )
+      end
+
+      it 'raises PublishNacked' do
+        expect {
+          publisher.publish_with_confirmation(data, routing_key: routing_key)
+        }.to raise_error(Ears::PublishNacked, 'Message was nacked by broker')
+      end
+    end
+  end
+
+  describe '#with_confirmation_batch' do
+    let(:messages) { [{ id: 1 }, { id: 2 }, { id: 3 }] }
+
+    before do
+      allow(mock_exchange).to receive(:publish)
+      allow(config).to receive(:publisher_confirms_batch_size).and_return(100)
+      allow(Timeout).to receive(:timeout).and_yield
+    end
+
+    it 'uses confirms channel pool' do
+      publisher.with_confirmation_batch do |batch|
+        # empty batch
+      end
+
+      expect(Ears::PublisherChannelPool).to have_received(:with_channel).with(
+        confirms: true,
+      )
+    end
+
+    it 'publishes multiple messages in batch' do
+      publisher.with_confirmation_batch do |batch|
+        messages.each_with_index do |msg, i|
+          batch.publish(msg, routing_key: "test.#{i}")
+        end
+      end
+
+      expect(mock_exchange).to have_received(:publish).exactly(3).times
+    end
+
+    it 'waits for confirmation after batch completion' do
+      allow(config).to receive(:publisher_confirms_timeout).and_return(15.0)
+      allow(Timeout).to receive(:timeout).with(15.0).and_yield
+
+      publisher.with_confirmation_batch do |batch|
+        batch.publish({ id: 1 }, routing_key: 'test.1')
+      end
+
+      expect(Timeout).to have_received(:timeout).with(15.0)
+      expect(mock_confirms_channel).to have_received(:wait_for_confirms)
+    end
+
+    it 'waits for confirmation with custom timeout' do
+      timeout = 30.0
+      allow(Timeout).to receive(:timeout).with(timeout).and_yield
+
+      publisher.with_confirmation_batch(timeout: timeout) do |batch|
+        batch.publish({ id: 1 }, routing_key: 'test.1')
+      end
+
+      expect(Timeout).to have_received(:timeout).with(timeout)
+      expect(mock_confirms_channel).to have_received(:wait_for_confirms)
+    end
+
+    context 'when batch size exceeds limit' do
+      before do
+        allow(config).to receive(:publisher_confirms_batch_size).and_return(2)
+      end
+
+      it 'raises BatchSizeExceeded' do
+        expect {
+          publisher.with_confirmation_batch do |batch|
+            3.times { |i| batch.publish({ id: i }, routing_key: "test.#{i}") }
+          end
+        }.to raise_error(
+          Ears::BatchSizeExceeded,
+          'Batch size limit (2) exceeded',
+        )
+      end
+    end
+
+    context 'when confirmation times out' do
+      before do
+        allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
+        allow(mock_confirms_channel).to receive(:nacked_set).and_return(Set.new)
+      end
+
+      it 'raises PublishConfirmationTimeout' do
+        timeout = 5.0
+
+        expect {
+          publisher.with_confirmation_batch(timeout: timeout) do |batch|
+            batch.publish({ id: 1 }, routing_key: 'test.1')
+          end
+        }.to raise_error(
+          Ears::PublishConfirmationTimeout,
+          "Confirmation timeout after #{timeout}s",
+        )
+      end
+    end
+
+    context 'when batch has nacked messages' do
+      before do
+        allow(Timeout).to receive(:timeout).and_yield
+        allow(mock_confirms_channel).to receive_messages(
+          wait_for_confirms: false,
+          nacked_set: Set.new([2]),
+        )
+      end
+
+      it 'raises PublishNacked' do
+        expect {
+          publisher.with_confirmation_batch do |batch|
+            batch.publish({ id: 1 }, routing_key: 'test.1')
+            batch.publish({ id: 2 }, routing_key: 'test.2')
+          end
+        }.to raise_error(Ears::PublishNacked, 'Message was nacked by broker')
       end
     end
   end
