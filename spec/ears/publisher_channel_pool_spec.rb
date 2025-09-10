@@ -67,14 +67,14 @@ RSpec.describe Ears::PublisherChannelPool do
         allow(Ears.configuration).to receive_messages(
           publisher_pool_size: 16,
           publisher_pool_timeout: 3,
-          publisher_confirms_pool_size: 8,
+          publisher_confirms_pool_size: 32,
         )
         allow(ConnectionPool).to receive(:new).and_return(mock_confirms_pool)
         allow(mock_confirms_pool).to receive(:with)
 
         described_class.with_channel(confirms: true) { |_channel| nil }
 
-        expect(ConnectionPool).to have_received(:new).with(size: 8, timeout: 3)
+        expect(ConnectionPool).to have_received(:new).with(size: 32, timeout: 3)
       end
 
       it 'falls back to standard pool size when confirms pool size not configured' do
