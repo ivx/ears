@@ -206,4 +206,3 @@ RSpec.describe Ears::ConfirmationBatch do
     end
   end
 end
-

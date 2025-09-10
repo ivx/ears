@@ -341,6 +341,29 @@ RSpec.describe Ears::Publisher do
     let(:data) { { id: 1, name: 'test' } }
     let(:timeout) { 10.0 }
 
+    around do |example|
+      original_retry_base_delay = config.publisher_retry_base_delay
+      original_retry_backoff_factor = config.publisher_retry_backoff_factor
+      original_connection_base_delay = config.publisher_connection_base_delay
+      original_connection_backoff_factor =
+        config.publisher_connection_backoff_factor
+
+      begin
+        config.publisher_retry_base_delay = 0
+        config.publisher_retry_backoff_factor = 0
+        config.publisher_connection_base_delay = 0
+        config.publisher_connection_backoff_factor = 0
+
+        example.run
+      ensure
+        config.publisher_retry_base_delay = original_retry_base_delay
+        config.publisher_retry_backoff_factor = original_retry_backoff_factor
+        config.publisher_connection_base_delay = original_connection_base_delay
+        config.publisher_connection_backoff_factor =
+          original_connection_backoff_factor
+      end
+    end
+
     before do
       allow(mock_exchange).to receive(:publish)
       allow(Timeout).to receive(:timeout).and_yield

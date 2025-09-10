@@ -289,4 +289,3 @@ RSpec.describe Ears::PublisherConfirmationSupport do
     end
   end
 end
-
