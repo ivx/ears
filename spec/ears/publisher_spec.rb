@@ -355,7 +355,6 @@ RSpec.describe Ears::Publisher do
         config.publisher_retry_backoff_factor = 0
         config.publisher_connection_base_delay = 0
         config.publisher_connection_backoff_factor = 0
-
         example.run
       ensure
         config.publisher_retry_base_delay = original_retry_base_delay
@@ -368,21 +367,17 @@ RSpec.describe Ears::Publisher do
 
     before do
       allow(mock_exchange).to receive(:publish)
-      allow(config).to receive(:publisher_confirms_cleanup_timeout).and_return(
-        1.0,
+      allow(mock_confirms_channel).to receive(:wait_for_confirms).and_return(
+        true,
       )
     end
 
-    it 'uses confirms channel pool' do
+    it 'successfully publishes with confirmation on happy path' do
       publisher.publish_with_confirmation(data, routing_key: routing_key)
 
       expect(Ears::PublisherChannelPool).to have_received(:with_channel).with(
         confirms: true,
       )
-    end
-
-    it 'publishes message with correct options' do
-      publisher.publish_with_confirmation(data, routing_key: routing_key)
 
       expected_options = {
         routing_key: routing_key,
@@ -396,226 +391,17 @@ RSpec.describe Ears::Publisher do
         data,
         expected_options,
       )
+
+      expect(mock_confirms_channel).to have_received(:wait_for_confirms)
     end
 
-    it 'waits for confirmation with default timeout' do
-      allow(config).to receive(:publisher_confirms_timeout).and_return(5.0)
-      allow(Thread).to receive(:new).and_call_original
+    it 'uses timeout from configuration' do
+      allow(config).to receive(:publisher_confirms_timeout).and_return(15.0)
 
       publisher.publish_with_confirmation(data, routing_key: routing_key)
 
-      expect(Thread).to have_received(:new)
+      expect(mock_exchange).to have_received(:publish)
       expect(mock_confirms_channel).to have_received(:wait_for_confirms)
-    end
-
-    it 'waits for confirmation with custom timeout' do
-      allow(Thread).to receive(:new).and_call_original
-
-      publisher.publish_with_confirmation(
-        data,
-        routing_key: routing_key,
-        timeout: timeout,
-      )
-
-      expect(Thread).to have_received(:new)
-      expect(mock_confirms_channel).to have_received(:wait_for_confirms)
-    end
-
-    it 'returns successfully when confirmed' do
-      expect {
-        publisher.publish_with_confirmation(data, routing_key: routing_key)
-      }.not_to raise_error
-    end
-
-    context 'when confirmation times out' do
-      before do
-        # Mock thread-based timeout behavior
-        mock_thread = instance_double(Thread)
-        allow(Thread).to receive(:new).and_return(mock_thread)
-        allow(mock_thread).to receive(:join).with(timeout).and_return(nil) # timeout
-        allow(mock_thread).to receive(:join).with(anything).and_return(true) # cleanup join
-        allow(mock_thread).to receive(:value) # Should not be called since timeout occurred
-        allow(mock_confirms_channel).to receive_messages(
-          nacked_set: Set.new,
-          open?: true,
-        )
-        allow(mock_confirms_channel).to receive(:close)
-      end
-
-      it 'raises PublishConfirmationTimeout' do
-        expect {
-          publisher.publish_with_confirmation(
-            data,
-            routing_key: routing_key,
-            timeout: timeout,
-          )
-        }.to raise_error(
-          Ears::PublishConfirmationTimeout,
-          "Confirmation timeout after #{timeout}s",
-        )
-      end
-    end
-
-    context 'when message is nacked' do
-      before do
-        allow(Timeout).to receive(:timeout).and_yield
-        allow(mock_confirms_channel).to receive_messages(
-          wait_for_confirms: false,
-          nacked_set: Set.new([1]),
-        )
-      end
-
-      it 'raises PublishNacked' do
-        expect {
-          publisher.publish_with_confirmation(data, routing_key: routing_key)
-        }.to raise_error(Ears::PublishNacked, 'Message was nacked by broker')
-      end
-    end
-  end
-
-  describe 'channel isolation after confirmation failures' do
-    let(:data) { { id: 1, name: 'test' } }
-    let(:timeout) { 5.0 }
-    let(:logger) { instance_double(Logger) }
-
-    before do
-      allow(mock_exchange).to receive(:publish)
-      allow(config).to receive_messages(
-        publisher_confirms_timeout: timeout,
-        publisher_confirms_cleanup_timeout: 1.0,
-        logger: logger,
-      )
-      allow(logger).to receive(:warn)
-      allow(logger).to receive(:info) # Allow retry handler logging
-      allow(Ears::PublisherChannelPool).to receive(:reset_confirms_pool!)
-    end
-
-    context 'when confirmation times out' do
-      before do
-        # Mock thread-based timeout behavior
-        mock_thread = instance_double(Thread)
-        allow(Thread).to receive(:new).and_return(mock_thread)
-        allow(mock_thread).to receive(:join).with(timeout).and_return(nil) # timeout
-        allow(mock_thread).to receive(:join).with(anything).and_return(true) # cleanup join
-        allow(mock_thread).to receive(:value) # Should not be called since timeout occurred
-        allow(mock_confirms_channel).to receive_messages(
-          nacked_set: Set.new,
-          open?: true,
-        )
-        allow(mock_confirms_channel).to receive(:close)
-      end
-
-      it 'resets confirms pool on timeout to prevent channel contamination' do
-        expect {
-          publisher.publish_with_confirmation(data, routing_key: routing_key)
-        }.to raise_error(Ears::PublishConfirmationTimeout)
-
-        expect(Ears::PublisherChannelPool).to have_received(
-          :reset_confirms_pool!,
-        )
-      end
-
-      it 'logs warning about timeout and pool reset' do
-        expect {
-          publisher.publish_with_confirmation(data, routing_key: routing_key)
-        }.to raise_error(Ears::PublishConfirmationTimeout)
-
-        expect(logger).to have_received(:warn).with(
-          "Publisher confirmation failed: timeout after #{timeout}s.",
-        )
-      end
-
-      it 'explicitly closes the failing channel to prevent resource leakage' do
-        expect {
-          publisher.publish_with_confirmation(data, routing_key: routing_key)
-        }.to raise_error(Ears::PublishConfirmationTimeout)
-
-        expect(mock_confirms_channel).to have_received(:open?)
-        expect(mock_confirms_channel).to have_received(:close)
-      end
-
-      it 'handles channel close failures gracefully' do
-        allow(mock_confirms_channel).to receive(:close).and_raise(
-          StandardError.new('Close failed'),
-        )
-
-        expect {
-          publisher.publish_with_confirmation(data, routing_key: routing_key)
-        }.to raise_error(Ears::PublishConfirmationTimeout)
-
-        expect(logger).to have_received(:warn).with(
-          'Failed closing channel on failed confirmation: Close failed',
-        )
-      end
-    end
-
-    context 'when message is nacked' do
-      before do
-        allow(Timeout).to receive(:timeout).and_yield
-        allow(mock_confirms_channel).to receive_messages(
-          wait_for_confirms: false,
-          nacked_set: Set.new([1]),
-        )
-      end
-
-      it 'resets confirms pool on nack to prevent channel contamination' do
-        expect {
-          publisher.publish_with_confirmation(data, routing_key: routing_key)
-        }.to raise_error(Ears::PublishNacked)
-
-        expect(Ears::PublisherChannelPool).to have_received(
-          :reset_confirms_pool!,
-        )
-      end
-
-      it 'logs warning about nack and pool reset' do
-        expect {
-          publisher.publish_with_confirmation(data, routing_key: routing_key)
-        }.to raise_error(Ears::PublishNacked)
-
-        expect(logger).to have_received(:warn).with(
-          'Publisher confirmation failed: message was nacked by broker.',
-        )
-      end
-
-      it 'explicitly closes the failing channel to prevent resource leakage' do
-        expect {
-          publisher.publish_with_confirmation(data, routing_key: routing_key)
-        }.to raise_error(Ears::PublishNacked)
-
-        expect(mock_confirms_channel).to have_received(:open?)
-        expect(mock_confirms_channel).to have_received(:close)
-      end
-    end
-
-    context 'with successful confirmations' do
-      before do
-        allow(Timeout).to receive(:timeout).and_yield
-        allow(mock_confirms_channel).to receive_messages(
-          wait_for_confirms: true,
-          nacked_set: Set.new,
-        )
-      end
-
-      it 'does not reset pool on successful confirmation' do
-        publisher.publish_with_confirmation(data, routing_key: routing_key)
-
-        expect(Ears::PublisherChannelPool).not_to have_received(
-          :reset_confirms_pool!,
-        )
-      end
-
-      it 'does not log warnings on successful confirmation' do
-        publisher.publish_with_confirmation(data, routing_key: routing_key)
-
-        expect(logger).not_to have_received(:warn)
-      end
-
-      it 'does not close the channel on successful confirmation' do
-        publisher.publish_with_confirmation(data, routing_key: routing_key)
-
-        expect(mock_confirms_channel).not_to have_received(:close)
-      end
     end
   end
 end

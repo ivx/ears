@@ -1,7 +1,7 @@
 require 'bunny'
 require 'ears/publisher_channel_pool'
 require 'ears/publisher_retry_handler'
-require 'ears/publisher_confirmation_support'
+require 'ears/publisher_confirmation_handler'
 require 'ears/errors'
 
 module Ears
@@ -10,7 +10,6 @@ module Ears
   # Uses a connection pool for thread-safe publishing with configurable pool size.
   # This provides better performance and thread safety compared to using per-thread channels.
   class Publisher
-    include PublisherConfirmationSupport
     # Creates a new publisher for the specified exchange.
     #
     # @param [String] exchange_name The name of the exchange to publish to.
@@ -59,7 +58,6 @@ module Ears
     #
     # @param [Hash, Array, Object] data The data to serialize as JSON and publish.
     # @param [String] routing_key The routing key for the message.
-    # @param [Float] timeout The timeout in seconds for waiting for confirmation.
     #
     # @option opts [String] :routing_key Routing key
     # @option opts [Boolean] :persistent Should the message be persisted to disk?
@@ -79,17 +77,23 @@ module Ears
     # @raise [PublishConfirmationTimeout] if confirmation times out
     # @raise [PublishNacked] if message is nacked by the broker
     # @return [void]
-    def publish_with_confirmation(data, routing_key:, timeout: nil, **options)
-      timeout ||= @config.publisher_confirms_timeout
+    def publish_with_confirmation(data, routing_key:, **options)
       publish_options = default_publish_options.merge(options)
 
       retry_handler.run do
-        publish_with_confirms(
-          data: data,
-          routing_key: routing_key,
-          publish_options: publish_options,
-          timeout: timeout,
-        )
+        validate_connection!
+
+        PublisherChannelPool.with_channel(confirms: true) do |channel|
+          exchange = create_exchange(channel)
+
+          publisher_confirmation_handler.publish_with_confirmation(
+            channel: channel,
+            exchange: exchange,
+            data: data,
+            routing_key: routing_key,
+            options: publish_options,
+          )
+        end
       end
     end
 
@@ -149,6 +153,11 @@ module Ears
 
     def retry_handler
       @retry_handler ||= PublisherRetryHandler.new(config, logger)
+    end
+
+    def publisher_confirmation_handler
+      @publisher_confirmation_handler ||=
+        PublisherConfirmationHandler.new(config: config, logger: logger)
     end
   end
 end
