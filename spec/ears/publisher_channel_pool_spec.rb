@@ -77,22 +77,6 @@ RSpec.describe Ears::PublisherChannelPool do
         expect(ConnectionPool).to have_received(:new).with(size: 32, timeout: 3)
       end
 
-      it 'falls back to standard pool size when confirms pool size not configured' do
-        allow(Ears.configuration).to receive_messages(
-          publisher_pool_size: 16,
-          publisher_pool_timeout: 3,
-        )
-        allow(Ears.configuration).to receive(:respond_to?).with(
-          :publisher_confirms_pool_size,
-        ).and_return(false)
-        allow(ConnectionPool).to receive(:new).and_return(mock_confirms_pool)
-        allow(mock_confirms_pool).to receive(:with)
-
-        described_class.with_channel(confirms: true) { |_channel| nil }
-
-        expect(ConnectionPool).to have_received(:new).with(size: 16, timeout: 3)
-      end
-
       it 'calls confirm_select on channels' do
         allow(ConnectionPool).to receive(:new).and_yield.and_return(
           mock_confirms_pool,

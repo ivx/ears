@@ -78,10 +78,8 @@ module Ears
       end
 
       def create_pool(confirms:)
-        pool_size = pool_size_for(confirms)
-
         ConnectionPool.new(
-          size: pool_size,
+          size: pool_size_for(confirms),
           timeout: Ears.configuration.publisher_pool_timeout,
         ) do
           channel = Ears.connection.create_channel
@@ -91,12 +89,9 @@ module Ears
       end
 
       def pool_size_for(confirms)
-        if confirms &&
-             Ears.configuration.respond_to?(:publisher_confirms_pool_size)
-          Ears.configuration.publisher_confirms_pool_size
-        else
-          Ears.configuration.publisher_pool_size
-        end
+        return Ears.configuration.publisher_confirms_pool_size if confirms
+
+        Ears.configuration.publisher_pool_size
       end
 
       def init_mutex
