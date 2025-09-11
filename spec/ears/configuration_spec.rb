@@ -173,17 +173,6 @@ RSpec.describe Ears::Configuration do
         expect(configuration.publisher_confirms_timeout).to eq(10.0)
       end
     end
-
-    describe '#publisher_confirms_batch_size' do
-      it 'has a default value of 100' do
-        expect(configuration.publisher_confirms_batch_size).to eq(100)
-      end
-
-      it 'allows setting the value' do
-        configuration.publisher_confirms_batch_size = 50
-        expect(configuration.publisher_confirms_batch_size).to eq(50)
-      end
-    end
   end
 
   describe '#logger' do

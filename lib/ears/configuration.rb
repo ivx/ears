@@ -19,7 +19,6 @@ module Ears
     DEFAULT_PUBLISHER_RETRY_BACKOFF_FACTOR = 2
     DEFAULT_PUBLISHER_CONFIRMS_POOL_SIZE = 32
     DEFAULT_PUBLISHER_CONFIRMS_TIMEOUT = 5.0
-    DEFAULT_PUBLISHER_CONFIRMS_BATCH_SIZE = 100
 
     # @return [String] the connection string for RabbitMQ.
     attr_accessor :rabbitmq_url
@@ -67,7 +66,6 @@ module Ears
     attr_accessor :publisher_confirms_timeout
 
     # @return [Integer] the maximum number of messages per confirmation batch
-    attr_accessor :publisher_confirms_batch_size
 
     def initialize
       @rabbitmq_url = DEFAULT_RABBITMQ_URL
@@ -83,7 +81,6 @@ module Ears
       @publisher_retry_backoff_factor = DEFAULT_PUBLISHER_RETRY_BACKOFF_FACTOR
       @publisher_confirms_pool_size = DEFAULT_PUBLISHER_CONFIRMS_POOL_SIZE
       @publisher_confirms_timeout = DEFAULT_PUBLISHER_CONFIRMS_TIMEOUT
-      @publisher_confirms_batch_size = DEFAULT_PUBLISHER_CONFIRMS_BATCH_SIZE
       @logger = Logger.new(IO::NULL)
     end
 

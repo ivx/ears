@@ -14,8 +14,4 @@ module Ears
   # Error raised when a message is nacked by the broker.
   class PublishNacked < PublishError
   end
-
-  # Error raised when a batch size limit is exceeded.
-  class BatchSizeExceeded < PublishError
-  end
 end

@@ -2,7 +2,6 @@ require 'bunny'
 require 'ears/publisher_channel_pool'
 require 'ears/publisher_retry_handler'
 require 'ears/publisher_confirmation_support'
-require 'ears/confirmation_batch'
 require 'ears/errors'
 
 module Ears
@@ -92,36 +91,6 @@ module Ears
           wait_for_confirm: true,
           timeout: timeout,
         )
-      end
-    end
-
-    # Publishes multiple messages in a batch with confirmation.
-    # All messages are published first, then waits for all confirmations.
-    #
-    # @param [Float] timeout The timeout in seconds for waiting for confirmations.
-    # @yieldparam [ConfirmationBatch] batch The batch object for publishing messages.
-    #
-    # @raise [PublishConfirmationTimeout] if confirmation times out
-    # @raise [PublishNacked] if any message is nacked by the broker
-    # @raise [BatchSizeExceeded] if batch size limit is exceeded
-    # @return [void]
-    def with_confirmation_batch(timeout: nil)
-      timeout ||= @config.publisher_confirms_timeout
-
-      PublisherChannelPool.with_channel(confirms: true) do |channel|
-        validate_connection!
-
-        batch = ConfirmationBatch.new(channel, self, @config)
-
-        begin
-          yield batch
-
-          unless wait_for_confirms_with_timeout(channel, timeout)
-            handle_confirmation_failure(channel, timeout)
-          end
-        ensure
-          batch.clear
-        end
       end
     end
 

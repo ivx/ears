@@ -354,18 +354,5 @@ RSpec.describe Ears::PublisherRetryHandler do
       expect(handler).not_to have_received(:sleep)
       expect(logger).not_to have_received(:info)
     end
-
-    it 'does not retry BatchSizeExceeded errors' do
-      error = Ears::BatchSizeExceeded.new('Batch too large')
-
-      expect { handler.run { raise error } }.to raise_error(
-        Ears::BatchSizeExceeded,
-        'Batch too large',
-      )
-
-      expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
-      expect(handler).not_to have_received(:sleep)
-      expect(logger).not_to have_received(:info)
-    end
   end
 end

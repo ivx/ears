@@ -21,11 +21,7 @@ module Ears
 
     # Confirmation errors should NOT be retried - they indicate the message
     # was published but confirmation failed, so retrying would duplicate the message
-    NON_RETRYABLE_ERRORS = [
-      PublishConfirmationTimeout,
-      PublishNacked,
-      BatchSizeExceeded,
-    ].freeze
+    NON_RETRYABLE_ERRORS = [PublishConfirmationTimeout, PublishNacked].freeze
 
     def initialize(config, logger)
       @config = config
