@@ -1,4 +1,3 @@
-require 'timeout'
 require 'ears/errors'
 
 module Ears
@@ -31,17 +30,29 @@ module Ears
     end
 
     def wait_for_confirms_with_timeout(channel, timeout)
+      return channel.wait_for_confirms if timeout.nil?
+
+      waiter = Thread.new { channel.wait_for_confirms }
+
+      return waiter.value if waiter.join(timeout)
+
       begin
-        Timeout.timeout(timeout) { return channel.wait_for_confirms }
-      rescue Timeout::Error
-        false
+        channel.close if channel.open?
+      rescue StandardError => e
+        warn("Failed closing channel on timeout: #{e.message}")
       end
+
+      cleanup_timeout = Ears.configuration.publisher_confirms_cleanup_timeout
+      waiter.join(cleanup_timeout) ||
+        warn('Confirm waiter did not stop promptly after close')
+
+      false
     end
 
     def handle_confirmation_failure(channel, timeout)
       begin
         channel.close if channel&.open?
-      rescue => e
+      rescue StandardError => e
         warn("Failed closing channel on failed confirmation: #{e.message}")
       end
 

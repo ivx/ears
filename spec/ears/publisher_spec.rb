@@ -368,7 +368,9 @@ RSpec.describe Ears::Publisher do
 
     before do
       allow(mock_exchange).to receive(:publish)
-      allow(Timeout).to receive(:timeout).and_yield
+      allow(config).to receive(:publisher_confirms_cleanup_timeout).and_return(
+        1.0,
+      )
     end
 
     it 'uses confirms channel pool' do
@@ -398,16 +400,16 @@ RSpec.describe Ears::Publisher do
 
     it 'waits for confirmation with default timeout' do
       allow(config).to receive(:publisher_confirms_timeout).and_return(5.0)
-      allow(Timeout).to receive(:timeout).with(5.0).and_yield
+      allow(Thread).to receive(:new).and_call_original
 
       publisher.publish_with_confirmation(data, routing_key: routing_key)
 
-      expect(Timeout).to have_received(:timeout).with(5.0)
+      expect(Thread).to have_received(:new)
       expect(mock_confirms_channel).to have_received(:wait_for_confirms)
     end
 
     it 'waits for confirmation with custom timeout' do
-      allow(Timeout).to receive(:timeout).with(timeout).and_yield
+      allow(Thread).to receive(:new).and_call_original
 
       publisher.publish_with_confirmation(
         data,
@@ -415,7 +417,7 @@ RSpec.describe Ears::Publisher do
         timeout: timeout,
       )
 
-      expect(Timeout).to have_received(:timeout).with(timeout)
+      expect(Thread).to have_received(:new)
       expect(mock_confirms_channel).to have_received(:wait_for_confirms)
     end
 
@@ -427,8 +429,17 @@ RSpec.describe Ears::Publisher do
 
     context 'when confirmation times out' do
       before do
-        allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
-        allow(mock_confirms_channel).to receive(:nacked_set).and_return(Set.new)
+        # Mock thread-based timeout behavior
+        mock_thread = instance_double(Thread)
+        allow(Thread).to receive(:new).and_return(mock_thread)
+        allow(mock_thread).to receive(:join).with(timeout).and_return(nil) # timeout
+        allow(mock_thread).to receive(:join).with(anything).and_return(true) # cleanup join
+        allow(mock_thread).to receive(:value) # Should not be called since timeout occurred
+        allow(mock_confirms_channel).to receive_messages(
+          nacked_set: Set.new,
+          open?: true,
+        )
+        allow(mock_confirms_channel).to receive(:close)
       end
 
       it 'raises PublishConfirmationTimeout' do
@@ -471,6 +482,7 @@ RSpec.describe Ears::Publisher do
       allow(mock_exchange).to receive(:publish)
       allow(config).to receive_messages(
         publisher_confirms_timeout: timeout,
+        publisher_confirms_cleanup_timeout: 1.0,
         logger: logger,
       )
       allow(logger).to receive(:warn)
@@ -480,8 +492,17 @@ RSpec.describe Ears::Publisher do
 
     context 'when confirmation times out' do
       before do
-        allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
-        allow(mock_confirms_channel).to receive(:nacked_set).and_return(Set.new)
+        # Mock thread-based timeout behavior
+        mock_thread = instance_double(Thread)
+        allow(Thread).to receive(:new).and_return(mock_thread)
+        allow(mock_thread).to receive(:join).with(timeout).and_return(nil) # timeout
+        allow(mock_thread).to receive(:join).with(anything).and_return(true) # cleanup join
+        allow(mock_thread).to receive(:value) # Should not be called since timeout occurred
+        allow(mock_confirms_channel).to receive_messages(
+          nacked_set: Set.new,
+          open?: true,
+        )
+        allow(mock_confirms_channel).to receive(:close)
       end
 
       it 'resets confirms pool on timeout to prevent channel contamination' do

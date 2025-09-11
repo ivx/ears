@@ -172,13 +172,34 @@ RSpec.describe Ears::PublisherConfirmationSupport do
 
   describe '#wait_for_confirms_with_timeout' do
     let(:timeout) { 5.0 }
+    let(:mock_config) do
+      instance_double(
+        Ears::Configuration,
+        publisher_confirms_cleanup_timeout: 1.0,
+      )
+    end
 
-    before { allow(Timeout).to receive(:timeout).and_yield }
+    before { allow(Ears).to receive(:configuration).and_return(mock_config) }
 
-    it 'uses Timeout.timeout with specified timeout' do
+    context 'when timeout is nil' do
+      it 'calls wait_for_confirms directly without threading' do
+        allow(mock_channel).to receive(:wait_for_confirms).and_return(true)
+
+        result =
+          test_instance.send(:wait_for_confirms_with_timeout, mock_channel, nil)
+
+        expect(mock_channel).to have_received(:wait_for_confirms)
+        expect(result).to be(true)
+      end
+    end
+
+    it 'uses thread-based timeout mechanism' do
+      allow(mock_channel).to receive(:wait_for_confirms).and_return(true)
+      allow(Thread).to receive(:new).and_call_original
+
       test_instance.send(:wait_for_confirms_with_timeout, mock_channel, timeout)
 
-      expect(Timeout).to have_received(:timeout).with(timeout)
+      expect(Thread).to have_received(:new)
     end
 
     it 'calls wait_for_confirms on channel' do
@@ -222,9 +243,15 @@ RSpec.describe Ears::PublisherConfirmationSupport do
     end
 
     context 'when timeout occurs' do
-      before { allow(Timeout).to receive(:timeout).and_raise(Timeout::Error) }
+      it 'returns false and closes the channel' do
+        # Mock a thread that times out
+        mock_thread = instance_double(Thread)
+        allow(Thread).to receive(:new).and_return(mock_thread)
+        allow(mock_thread).to receive(:join).with(timeout).and_return(nil) # timeout
+        allow(mock_thread).to receive(:join).with(1.0).and_return(true) # cleanup join
+        allow(mock_channel).to receive(:open?).and_return(true)
+        allow(mock_channel).to receive(:close)
 
-      it 'returns false' do
         result =
           test_instance.send(
             :wait_for_confirms_with_timeout,
@@ -233,6 +260,7 @@ RSpec.describe Ears::PublisherConfirmationSupport do
           )
 
         expect(result).to be(false)
+        expect(mock_channel).to have_received(:close)
       end
     end
   end
