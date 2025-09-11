@@ -139,7 +139,7 @@ RSpec.describe Ears::PublisherChannelPool do
 
       allow(ConnectionPool).to receive(:new) do
         pool_creation_count += 1
-        pool_creation_count.odd? ? mock_standard_pool : mock_confirms_pool
+        pool_creation_count.even? ? mock_confirms_pool : mock_standard_pool
       end
 
       # Test concurrent access to both pool types
