@@ -151,6 +151,30 @@ RSpec.describe Ears::Configuration do
     end
   end
 
+  describe 'publisher confirms configuration' do
+    describe '#publisher_confirms_pool_size' do
+      it 'has a default value of 32' do
+        expect(configuration.publisher_confirms_pool_size).to eq(32)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_confirms_pool_size = 16
+        expect(configuration.publisher_confirms_pool_size).to eq(16)
+      end
+    end
+
+    describe '#publisher_confirms_timeout' do
+      it 'has a default value of 5.0' do
+        expect(configuration.publisher_confirms_timeout).to eq(5.0)
+      end
+
+      it 'allows setting the value' do
+        configuration.publisher_confirms_timeout = 10.0
+        expect(configuration.publisher_confirms_timeout).to eq(10.0)
+      end
+    end
+  end
+
   describe '#logger' do
     context 'with default logger' do
       it 'has a default logger' do

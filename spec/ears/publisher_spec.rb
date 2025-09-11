@@ -9,24 +9,33 @@ RSpec.describe Ears::Publisher do
   end
 
   let(:mock_channel) { instance_double(Bunny::Channel) }
+  let(:mock_confirms_channel) do
+    instance_double(
+      Bunny::Channel,
+      wait_for_confirms: true,
+      nacked_set: Set.new,
+      open?: true,
+      close: nil,
+    )
+  end
   let(:mock_exchange) { instance_double(Bunny::Exchange) }
   let(:routing_key) { 'test.message' }
   let(:message) { 'test message' }
+  let(:config) { Ears.configuration }
 
   before do
     mock_connection = instance_double(Bunny::Session)
     allow(mock_connection).to receive(:open?).and_return(true)
     allow(Ears).to receive(:connection).and_return(mock_connection)
 
-    allow(Ears::PublisherChannelPool).to receive(:with_channel).and_yield(
-      mock_channel,
-    )
-    allow(Bunny::Exchange).to receive(:new).with(
-      mock_channel,
-      exchange_type,
-      exchange_name,
-      { durable: true },
-    ).and_return(mock_exchange)
+    allow(Ears::PublisherChannelPool).to receive(:with_channel).with(
+      confirms: false,
+    ).and_yield(mock_channel)
+    allow(Ears::PublisherChannelPool).to receive(:with_channel).with(
+      confirms: true,
+    ).and_yield(mock_confirms_channel)
+
+    allow(Bunny::Exchange).to receive(:new).and_return(mock_exchange)
   end
 
   describe '#publish' do
@@ -327,6 +336,72 @@ RSpec.describe Ears::Publisher do
         expect(Ears::PublisherChannelPool).not_to have_received(:reset!)
         expect(retry_handler).to have_received(:sleep).twice
       end
+    end
+  end
+
+  describe '#publish_with_confirmation' do
+    let(:data) { { id: 1, name: 'test' } }
+    let(:timeout) { 10.0 }
+
+    around do |example|
+      original_retry_base_delay = config.publisher_retry_base_delay
+      original_retry_backoff_factor = config.publisher_retry_backoff_factor
+      original_connection_base_delay = config.publisher_connection_base_delay
+      original_connection_backoff_factor =
+        config.publisher_connection_backoff_factor
+
+      begin
+        config.publisher_retry_base_delay = 0
+        config.publisher_retry_backoff_factor = 0
+        config.publisher_connection_base_delay = 0
+        config.publisher_connection_backoff_factor = 0
+        example.run
+      ensure
+        config.publisher_retry_base_delay = original_retry_base_delay
+        config.publisher_retry_backoff_factor = original_retry_backoff_factor
+        config.publisher_connection_base_delay = original_connection_base_delay
+        config.publisher_connection_backoff_factor =
+          original_connection_backoff_factor
+      end
+    end
+
+    before do
+      allow(mock_exchange).to receive(:publish)
+      allow(mock_confirms_channel).to receive(:wait_for_confirms).and_return(
+        true,
+      )
+    end
+
+    it 'successfully publishes with confirmation on happy path' do
+      publisher.publish_with_confirmation(data, routing_key: routing_key)
+
+      expect(Ears::PublisherChannelPool).to have_received(:with_channel).with(
+        confirms: true,
+      )
+
+      expected_options = {
+        routing_key: routing_key,
+        persistent: true,
+        timestamp: kind_of(Integer),
+        headers: {
+        },
+        content_type: 'application/json',
+      }
+      expect(mock_exchange).to have_received(:publish).with(
+        data,
+        expected_options,
+      )
+
+      expect(mock_confirms_channel).to have_received(:wait_for_confirms)
+    end
+
+    it 'uses timeout from configuration' do
+      allow(config).to receive(:publisher_confirms_timeout).and_return(15.0)
+
+      publisher.publish_with_confirmation(data, routing_key: routing_key)
+
+      expect(mock_exchange).to have_received(:publish)
+      expect(mock_confirms_channel).to have_received(:wait_for_confirms)
     end
   end
 end

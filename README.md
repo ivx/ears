@@ -197,6 +197,57 @@ rescue => e
 end
 ```
 
+### Publisher Confirms
+
+#### Basic Usage
+
+For guaranteed message delivery, use `publish_with_confirmation` which waits for broker acknowledgment:
+
+```ruby
+publisher = Ears::Publisher.new('events', :topic)
+
+# Publish with confirmation - blocks until broker acknowledges
+publisher.publish_with_confirmation(
+  { user_id: 123, action: 'payment_processed' },
+  routing_key: 'payment.processed',
+)
+```
+
+#### Configuration
+
+Publisher confirms use a separate channel pool with configurable settings:
+
+```ruby
+Ears.configure do |config|
+  # Confirms-specific channel pool size (default: 32)
+  config.publisher_confirms_pool_size = 32
+
+  # Timeout for waiting for confirms in seconds (default: 5.0)
+  config.publisher_confirms_timeout = 5.0
+
+  # Cleanup timeout after confirmation failure (default: 1.0)
+  config.publisher_confirms_cleanup_timeout = 1.0
+end
+```
+
+#### Error Handling
+
+Publisher confirms raise specific exceptions that are NOT automatically retried:
+
+```ruby
+begin
+  publisher.publish_with_confirmation(data, routing_key: 'important.event')
+rescue Ears::PublishConfirmationTimeout => e
+  # Message may or may not have reached broker
+  logger.error "Confirmation timed out: #{e.message}"
+rescue Ears::PublishNacked => e
+  # Broker explicitly rejected the message
+  logger.error "Message was nacked: #{e.message}"
+end
+```
+
+**Note:** Unlike regular publishing, confirmation errors are not retried to avoid message duplication.
+
 ### Basic consumer usage
 
 First, you should configure `Ears`.

@@ -1,6 +1,8 @@
 require 'bunny'
 require 'ears/publisher_channel_pool'
 require 'ears/publisher_retry_handler'
+require 'ears/publisher_confirmation_handler'
+require 'ears/errors'
 
 module Ears
   # Publisher for sending messages to RabbitMQ exchanges.
@@ -51,6 +53,50 @@ module Ears
       end
     end
 
+    # Publishes a message to the configured exchange with confirmation.
+    # Waits for RabbitMQ to confirm the message was received.
+    #
+    # @param [Hash, Array, Object] data The data to serialize as JSON and publish.
+    # @param [String] routing_key The routing key for the message.
+    #
+    # @option opts [String] :routing_key Routing key
+    # @option opts [Boolean] :persistent Should the message be persisted to disk?
+    # @option opts [Boolean] :mandatory Should the message be returned if it cannot be routed to any queue?
+    # @option opts [Integer] :timestamp A timestamp associated with this message
+    # @option opts [Integer] :expiration Expiration time after which the message will be deleted
+    # @option opts [String] :type Message type, e.g. what type of event or command this message represents. Can be any string
+    # @option opts [String] :reply_to Queue name other apps should send the response to
+    # @option opts [String] :content_type Message content type (e.g. application/json)
+    # @option opts [String] :content_encoding Message content encoding (e.g. gzip)
+    # @option opts [String] :correlation_id Message correlated to this one, e.g. what request this message is a reply for
+    # @option opts [Integer] :priority Message priority, 0 to 9. Not used by RabbitMQ, only applications
+    # @option opts [String] :message_id Any message identifier
+    # @option opts [String] :user_id Optional user ID. Verified by RabbitMQ against the actual connection username
+    # @option opts [String] :app_id Optional application ID
+    #
+    # @raise [PublishConfirmationTimeout] if confirmation times out
+    # @raise [PublishNacked] if message is nacked by the broker
+    # @return [void]
+    def publish_with_confirmation(data, routing_key:, **options)
+      publish_options = default_publish_options.merge(options)
+
+      retry_handler.run do
+        validate_connection!
+
+        PublisherChannelPool.with_channel(confirms: true) do |channel|
+          exchange = create_exchange(channel)
+
+          publisher_confirmation_handler.publish_with_confirmation(
+            channel: channel,
+            exchange: exchange,
+            data: data,
+            routing_key: routing_key,
+            options: publish_options,
+          )
+        end
+      end
+    end
+
     # Resets the channel pool, forcing new channels to be created.
     # This can be useful for connection recovery scenarios.
     #
@@ -68,17 +114,21 @@ module Ears
                 :logger
 
     def publish_with_channel(data:, routing_key:, publish_options:)
-      unless Ears.connection.open?
-        raise PublisherRetryHandler::PublishToStaleChannelError,
-              'Connection is not open'
-      end
+      validate_connection!
 
-      PublisherChannelPool.with_channel do |channel|
+      PublisherChannelPool.with_channel(confirms: false) do |channel|
         exchange = create_exchange(channel)
         exchange.publish(
           data,
           { routing_key: routing_key }.merge(publish_options),
         )
+      end
+    end
+
+    def validate_connection!
+      unless Ears.connection.open?
+        raise PublisherRetryHandler::PublishToStaleChannelError,
+              'Connection is not open'
       end
     end
 
@@ -103,6 +153,11 @@ module Ears
 
     def retry_handler
       @retry_handler ||= PublisherRetryHandler.new(config, logger)
+    end
+
+    def publisher_confirmation_handler
+      @publisher_confirmation_handler ||=
+        PublisherConfirmationHandler.new(config: config, logger: logger)
     end
   end
 end
