@@ -41,6 +41,7 @@ module Ears
           setup_exchange_declare(channel)
           setup_register_exchange(channel)
           setup_basic_publish(channel)
+          setup_publisher_confirms(channel)
         end
       end
 
@@ -64,6 +65,14 @@ module Ears
             raise_unmocked_exchange_error(exchange)
           end
         end
+      end
+
+      def setup_publisher_confirms(channel)
+        allow(channel).to receive(:confirm_select)
+        allow(channel).to receive(:wait_for_confirms).and_return(true)
+        allow(channel).to receive(:nacked_set).and_return(Set.new)
+        allow(channel).to receive(:open?).and_return(true)
+        allow(channel).to receive(:close)
       end
 
       def create_or_get_mock_exchange(name, type, _options)

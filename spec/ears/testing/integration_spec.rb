@@ -72,6 +72,14 @@ RSpec.describe 'Ears Testing Integration' do # rubocop:disable RSpec/DescribeCla
     expect(published_messages.size).to eq(1)
   end
 
+  it 'captures messages with publisher confirms' do
+    publisher = Ears::Publisher.new('events')
+
+    publisher.publish_with_confirmation({ id: 1 }, routing_key: 'confirm.test')
+
+    expect(published_messages('events').size).to eq(1)
+  end
+
   it 'raises error when publishing to unmocked exchange' do
     expect {
       Ears::Publisher.new('unmocked').publish(
