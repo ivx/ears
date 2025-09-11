@@ -20,7 +20,7 @@ module Ears
     ].freeze
 
     # Confirmation errors should NOT be retried - they indicate the message
-    # was published but confirmation failed, so retrying would duplicate the message
+    # was published but confirmation failed, so retrying could duplicate the message
     NON_RETRYABLE_ERRORS = [PublishConfirmationTimeout, PublishNacked].freeze
 
     def initialize(config, logger)
@@ -33,8 +33,6 @@ module Ears
       begin
         block.call
       rescue *NON_RETRYABLE_ERRORS => e
-        # Don't retry confirmation errors - they indicate the message was published
-        # but confirmation failed. Retrying would duplicate the message.
         raise e
       rescue *CONNECTION_ERRORS => e
         attempt = handle_connection_error(e, attempt) # rubocop:disable Lint/UselessAssignment
