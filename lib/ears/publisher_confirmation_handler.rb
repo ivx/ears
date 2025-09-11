@@ -74,7 +74,7 @@ module Ears
 
       PublisherChannelPool.reset_confirms_pool!
 
-      if channel.nacked_set && !channel.nacked_set.empty?
+      if channel.nacked_set&.any?
         warn('Publisher confirmation failed: message was nacked by broker.')
         raise PublishNacked, 'Message was nacked by broker'
       else
