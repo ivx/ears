@@ -88,7 +88,6 @@ module Ears
           data: data,
           routing_key: routing_key,
           publish_options: publish_options,
-          wait_for_confirm: true,
           timeout: timeout,
         )
       end

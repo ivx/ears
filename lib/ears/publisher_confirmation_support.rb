@@ -8,7 +8,6 @@ module Ears
       data:,
       routing_key:,
       publish_options:,
-      wait_for_confirm: false,
       timeout: nil
     )
       validate_connection!
@@ -21,10 +20,8 @@ module Ears
           { routing_key: routing_key }.merge(publish_options),
         )
 
-        if wait_for_confirm
-          unless wait_for_confirms_with_timeout(channel, timeout)
-            handle_confirmation_failure(channel, timeout)
-          end
+        unless wait_for_confirms_with_timeout(channel, timeout)
+          handle_confirmation_failure(channel, timeout)
         end
       end
     end

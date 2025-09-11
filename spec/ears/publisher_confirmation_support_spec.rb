@@ -95,7 +95,6 @@ RSpec.describe Ears::PublisherConfirmationSupport do
         data: data,
         routing_key: routing_key,
         publish_options: publish_options,
-        wait_for_confirm: true,
         timeout: timeout,
       )
 
@@ -119,7 +118,6 @@ RSpec.describe Ears::PublisherConfirmationSupport do
           data: data,
           routing_key: routing_key,
           publish_options: publish_options,
-          wait_for_confirm: true,
           timeout: timeout,
         )
 
@@ -141,31 +139,12 @@ RSpec.describe Ears::PublisherConfirmationSupport do
           data: data,
           routing_key: routing_key,
           publish_options: publish_options,
-          wait_for_confirm: true,
           timeout: timeout,
         )
 
         expect(test_instance).to have_received(
           :handle_confirmation_failure,
         ).with(mock_channel, timeout)
-      end
-    end
-
-    context 'when wait_for_confirm is false' do
-      it 'does not wait for confirmation' do
-        allow(test_instance).to receive(:wait_for_confirms_with_timeout)
-
-        test_instance.send(
-          :publish_with_confirms,
-          data: data,
-          routing_key: routing_key,
-          publish_options: publish_options,
-          wait_for_confirm: false,
-        )
-
-        expect(test_instance).not_to have_received(
-          :wait_for_confirms_with_timeout,
-        )
       end
     end
   end
