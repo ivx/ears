@@ -32,10 +32,10 @@ module Ears
         return [] unless Ears::Testing.message_capture
 
         messages = exchange_name ? messages_for(exchange_name) : all_messages
-        if routing_key_match
-          filter_for_routing_key(messages, routing_key_match)
-        else
-          messages
+        return messages unless routing_key_match
+
+        messages.select do |message|
+          message.routing_key.match?(routing_key_match)
         end
       end
 
@@ -59,10 +59,6 @@ module Ears
 
       def all_messages
         Ears::Testing.message_capture.all_messages
-      end
-
-      def filter_for_routing_key(messages, routing_key)
-        messages.select { |message| message.routing_key.include?(routing_key) }
       end
     end
   end

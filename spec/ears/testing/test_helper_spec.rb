@@ -80,6 +80,18 @@ RSpec.describe Ears::Testing::TestHelper do
         expect(messages.map(&:data)).to contain_exactly('data3', 'data4')
       end
     end
+
+    context 'when routing key is passed as a regex' do
+      it 'returns messages matching the specified routing key' do
+        messages = helper.published_messages(routing_key_match: /^[^2]*$/)
+        expect(messages.size).to eq(3)
+        expect(messages.map(&:data)).to contain_exactly(
+          'data1',
+          'data3',
+          'data4',
+        )
+      end
+    end
   end
 
   describe '#last_published_message' do
