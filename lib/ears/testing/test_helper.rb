@@ -39,6 +39,10 @@ module Ears
         published_messages(exchange_name).last
       end
 
+      def last_published_payload(exchange_name = nil)
+        last_published_message(exchange_name).data
+      end
+
       def clear_published_messages
         Ears::Testing.message_capture&.clear
       end
@@ -54,7 +58,7 @@ module Ears
       end
 
       def filter_for_routing_key(messages, routing_key)
-        messages.select { |message| message.routing_key == routing_key }
+        messages.select { |message| message.routing_key.include?(routing_key) }
       end
     end
   end

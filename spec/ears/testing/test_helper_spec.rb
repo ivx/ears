@@ -110,6 +110,21 @@ RSpec.describe Ears::Testing::TestHelper do
     end
   end
 
+  describe 'last_published_payload' do
+    before do
+      helper.mock_ears('exchange1')
+      Ears::Testing.message_capture.add_message(
+        'exchange1',
+        'payload test',
+        'key1',
+      )
+    end
+
+    it 'matches the payload of the last published message with the passed payload' do
+      expect(helper.last_published_payload).to eq 'payload test'
+    end
+  end
+
   describe '#clear_published_messages' do
     it 'clears all captured messages' do
       helper.mock_ears('exchange1')
