@@ -75,7 +75,7 @@ RSpec.describe Ears::Testing::TestHelper do
 
     context 'when routing key is passed' do
       it 'returns messages with specified routing key' do
-        messages = helper.published_messages(routing_key: 'key3')
+        messages = helper.published_messages(routing_key_match: 'key3')
         expect(messages.size).to eq(2)
         expect(messages.map(&:data)).to contain_exactly('data3', 'data4')
       end

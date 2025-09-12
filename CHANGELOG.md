@@ -2,7 +2,7 @@
 
 ## 0.22.1 (2025-09-11)
 
-- Add optional `routing_key` parameter to `#published_messages` in `Ears::Testing::TestHelper`
+- Add optional `routing_key_match` parameter to `#published_messages` in `Ears::Testing::TestHelper`
 - Add `#last_published_payload` to `Ears::Testing::TestHelper`
 
 ## 0.22.0 (2025-09-11)
