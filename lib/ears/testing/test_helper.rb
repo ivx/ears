@@ -28,14 +28,11 @@ module Ears
         end
       end
 
-      def published_messages(exchange_name = nil)
+      def published_messages(exchange_name = nil, routing_key: nil)
         return [] unless Ears::Testing.message_capture
 
-        if exchange_name
-          return Ears::Testing.message_capture.messages_for(exchange_name)
-        end
-
-        Ears::Testing.message_capture.all_messages
+        messages = exchange_name ? messages_for(exchange_name) : all_messages
+        routing_key ? filter_for_routing_key(messages, routing_key) : messages
       end
 
       def last_published_message(exchange_name = nil)
@@ -44,6 +41,20 @@ module Ears
 
       def clear_published_messages
         Ears::Testing.message_capture&.clear
+      end
+
+      private
+
+      def messages_for(exchange_name)
+        Ears::Testing.message_capture.messages_for(exchange_name)
+      end
+
+      def all_messages
+        Ears::Testing.message_capture.all_messages
+      end
+
+      def filter_for_routing_key(messages, routing_key)
+        messages.select { |message| message.routing_key == routing_key }
       end
     end
   end

@@ -48,12 +48,18 @@ RSpec.describe Ears::Testing::TestHelper do
       Ears::Testing.message_capture.add_message('exchange1', 'data1', 'key1')
       Ears::Testing.message_capture.add_message('exchange2', 'data2', 'key2')
       Ears::Testing.message_capture.add_message('exchange1', 'data3', 'key3')
+      Ears::Testing.message_capture.add_message('exchange2', 'data4', 'key3')
     end
 
     it 'returns all messages when no exchange specified' do
       messages = helper.published_messages
-      expect(messages.size).to eq(3)
-      expect(messages.map(&:data)).to contain_exactly('data1', 'data2', 'data3')
+      expect(messages.size).to eq(4)
+      expect(messages.map(&:data)).to contain_exactly(
+        'data1',
+        'data2',
+        'data3',
+        'data4',
+      )
     end
 
     it 'returns messages for specific exchange' do
@@ -65,6 +71,14 @@ RSpec.describe Ears::Testing::TestHelper do
     it 'returns empty array when no messages captured' do
       helper.clear_published_messages
       expect(helper.published_messages).to eq([])
+    end
+
+    context 'when routing key is passed' do
+      it 'returns messages with specified routing key' do
+        messages = helper.published_messages(routing_key: 'key3')
+        expect(messages.size).to eq(2)
+        expect(messages.map(&:data)).to contain_exactly('data3', 'data4')
+      end
     end
   end
 
