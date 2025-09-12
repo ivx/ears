@@ -28,22 +28,37 @@ module Ears
         end
       end
 
-      def published_messages(exchange_name = nil)
+      def published_messages(exchange_name = nil, routing_key_match: nil)
         return [] unless Ears::Testing.message_capture
 
-        if exchange_name
-          return Ears::Testing.message_capture.messages_for(exchange_name)
-        end
+        messages = exchange_name ? messages_for(exchange_name) : all_messages
+        return messages unless routing_key_match
 
-        Ears::Testing.message_capture.all_messages
+        messages.select do |message|
+          message.routing_key.match?(routing_key_match)
+        end
       end
 
       def last_published_message(exchange_name = nil)
         published_messages(exchange_name).last
       end
 
+      def last_published_payload(exchange_name = nil)
+        last_published_message(exchange_name).data
+      end
+
       def clear_published_messages
         Ears::Testing.message_capture&.clear
+      end
+
+      private
+
+      def messages_for(exchange_name)
+        Ears::Testing.message_capture.messages_for(exchange_name)
+      end
+
+      def all_messages
+        Ears::Testing.message_capture.all_messages
       end
     end
   end
