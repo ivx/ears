@@ -132,7 +132,7 @@ RSpec.describe Ears::Testing::TestHelper do
       )
     end
 
-    it 'matches the payload of the last published message with the passed payload' do
+    it 'returns the payload of the last published message' do
       expect(helper.last_published_payload).to eq 'payload test'
     end
   end
