@@ -118,4 +118,59 @@ RSpec.describe Ears::Testing::Matchers do
       }.to raise_error(RSpec::Expectations::ExpectationNotMetError)
     end
   end
+
+  context 'when exchange_name is specified' do
+    let(:messages) do
+      [
+        Ears::Testing::MessageCapture::Message.new(
+          routing_key: 'stuff.created',
+          data: {
+            'id' => 1,
+          },
+          options: {
+          },
+          exchange_name: 'stuff',
+        ),
+        Ears::Testing::MessageCapture::Message.new(
+          routing_key: 'other_stuff.received',
+          data: {
+            'id' => 42,
+          },
+          options: {
+          },
+          exchange_name: 'other stuff',
+        ),
+      ]
+    end
+
+    before do
+      allow(message_capture).to receive(:messages_for).with(
+        'orders',
+      ).and_return([messages[0]])
+      allow(message_capture).to receive(:messages_for).with(
+        'payments',
+      ).and_return([messages[1]])
+      allow(message_capture).to receive(:all_messages).and_return(messages)
+    end
+
+    it 'matches only messages from the specified exchange' do
+      expect(
+        routing_key: 'stuff.created',
+        exchange_name: 'orders',
+      ).to have_been_published
+      expect(
+        routing_key: 'other_stuff.received',
+        exchange_name: 'payments',
+      ).to have_been_published
+    end
+
+    it 'does not match if the routing_key exists but in another exchange' do
+      expect {
+        expect(
+          routing_key: 'payments.received',
+          exchange_name: 'orders',
+        ).to have_been_published
+      }.to raise_error(RSpec::Expectations::ExpectationNotMetError)
+    end
+  end
 end
