@@ -35,7 +35,7 @@ module Ears
       rescue *NON_RETRYABLE_ERRORS => e
         raise e
       rescue *CONNECTION_ERRORS => e
-        attempt = handle_connection_error(e, attempt) # rubocop:disable Lint/UselessAssignment
+        attempt = handle_connection_error(e, attempt)
         retry
       rescue StandardError => e
         attempt = handle_standard_error(e, attempt)
