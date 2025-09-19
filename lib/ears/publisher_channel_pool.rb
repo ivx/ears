@@ -1,4 +1,5 @@
 require 'connection_pool'
+require 'ears/publisher_retry_handler'
 
 module Ears
   # Channel pool management for publishers.
@@ -11,12 +12,15 @@ module Ears
       # @param [Boolean] confirms Whether to use a channel with publisher confirms enabled
       # @yieldparam [Bunny::Channel] channel The channel to use for publishing
       # @return [Object] The result of the block
-      def with_channel(confirms: false, &)
+      def with_channel(confirms: false, &block)
         # CRITICAL: Preserve fork-safety at the entry point
         reset! if @creator_pid && @creator_pid != Process.pid
 
         pool = confirms ? confirms_pool : standard_pool
-        pool.with(&)
+        pool.with do |channel|
+          validate_channel_health!(channel, confirms)
+          block.call(channel)
+        end
       end
 
       # Resets both channel pools, forcing new channels to be created.
@@ -96,6 +100,28 @@ module Ears
 
       def init_mutex
         @init_mutex ||= Mutex.new
+      end
+
+      def validate_channel_health!(channel, confirms)
+        return if channel.open?
+
+        cleanup_closed_channel(channel)
+        reset_appropriate_pool(confirms)
+
+        raise PublisherRetryHandler::PublishToStaleChannelError,
+              'Channel is closed'
+      end
+
+      def cleanup_closed_channel(channel)
+        return unless channel.respond_to?(:close)
+
+        channel.close
+      rescue StandardError
+        # Channel is already closed, ignore cleanup errors
+      end
+
+      def reset_appropriate_pool(confirms)
+        confirms ? reset_confirms_pool! : reset!
       end
     end
   end

@@ -337,6 +337,48 @@ RSpec.describe Ears::Publisher do
         expect(retry_handler).to have_received(:sleep).twice
       end
     end
+
+    context 'when channel is closed by RabbitMQ (e.g., due to NOT_FOUND error)' do
+      let(:closed_channel) do
+        instance_double(
+          Bunny::Channel,
+          open?: false,
+          close: nil,
+          respond_to?: true,
+        )
+      end
+
+      before do
+        allow(connection).to receive(:open?).and_return(true)
+
+        call_count = 0
+        allow(Ears::PublisherChannelPool).to receive(:with_channel) do |&block|
+          call_count += 1
+          if call_count == 1
+            raise Ears::PublisherRetryHandler::PublishToStaleChannelError,
+                  'Channel is closed'
+          else
+            block.call(mock_channel)
+          end
+        end
+
+        allow(Ears::PublisherChannelPool).to receive(:reset!)
+        allow(mock_exchange).to receive(:publish)
+      end
+
+      it 'detects closed channel and recovers on retry' do
+        publisher.publish(data, routing_key: routing_key)
+
+        expect(Ears::PublisherChannelPool).to have_received(:reset!).once
+        expect(mock_exchange).to have_received(:publish).once
+      end
+
+      it 'retries after detecting closed channel' do
+        publisher.publish(data, routing_key: routing_key)
+
+        expect(Ears::PublisherChannelPool).to have_received(:with_channel).twice
+      end
+    end
   end
 
   describe '#publish_with_confirmation' do
