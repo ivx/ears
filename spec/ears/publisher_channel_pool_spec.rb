@@ -3,7 +3,12 @@ require 'ears/publisher_channel_pool'
 RSpec.describe Ears::PublisherChannelPool do
   let(:mock_connection) { instance_double(Bunny::Session) }
   let(:mock_channel) do
-    instance_double(Bunny::Channel, close: nil, confirm_select: nil)
+    instance_double(
+      Bunny::Channel,
+      close: nil,
+      confirm_select: nil,
+      open?: true,
+    )
   end
   let(:mock_standard_pool) { instance_double(ConnectionPool, shutdown: nil) }
   let(:mock_confirms_pool) { instance_double(ConnectionPool, shutdown: nil) }
@@ -18,6 +23,67 @@ RSpec.describe Ears::PublisherChannelPool do
   end
 
   describe '.with_channel' do
+    context 'when channel is closed' do
+      let(:closed_channel) do
+        instance_double(
+          Bunny::Channel,
+          open?: false,
+          close: nil,
+          respond_to?: true,
+        )
+      end
+
+      it 'detects closed standard channel and resets pool' do
+        allow(ConnectionPool).to receive(:new).and_return(mock_standard_pool)
+        allow(mock_standard_pool).to receive(:with).and_yield(closed_channel)
+        allow(described_class).to receive(:reset!)
+
+        expect {
+          described_class.with_channel { |_channel| nil }
+        }.to raise_error(
+          Ears::PublisherRetryHandler::PublishToStaleChannelError,
+          'Channel is closed',
+        )
+
+        expect(described_class).to have_received(:reset!)
+        expect(closed_channel).to have_received(:close)
+      end
+
+      it 'detects closed confirms channel and resets confirms pool' do
+        allow(ConnectionPool).to receive(:new).and_return(mock_confirms_pool)
+        allow(mock_confirms_pool).to receive(:with).and_yield(closed_channel)
+        allow(described_class).to receive(:reset_confirms_pool!)
+
+        expect {
+          described_class.with_channel(confirms: true) { |_channel| nil }
+        }.to raise_error(
+          Ears::PublisherRetryHandler::PublishToStaleChannelError,
+          'Channel is closed',
+        )
+
+        expect(described_class).to have_received(:reset_confirms_pool!)
+        expect(closed_channel).to have_received(:close)
+      end
+
+      it 'handles cleanup errors gracefully' do
+        allow(ConnectionPool).to receive(:new).and_return(mock_standard_pool)
+        allow(mock_standard_pool).to receive(:with).and_yield(closed_channel)
+        allow(closed_channel).to receive(:close).and_raise(
+          StandardError.new('cleanup error'),
+        )
+        allow(described_class).to receive(:reset!)
+
+        expect {
+          described_class.with_channel { |_channel| nil }
+        }.to raise_error(
+          Ears::PublisherRetryHandler::PublishToStaleChannelError,
+          'Channel is closed',
+        )
+
+        expect(described_class).to have_received(:reset!)
+      end
+    end
+
     context 'with confirms: false (default)' do
       it 'yields a channel from the standard pool' do
         allow(ConnectionPool).to receive(:new).and_return(mock_standard_pool)

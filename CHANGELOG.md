@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.22.2 (2025-01-19)
+
+### Fixed
+
+- Publisher now proactively detects and recovers from closed channels before attempting to publish, preventing `Bunny::ChannelAlreadyClosed` errors when channels are closed by RabbitMQ (e.g., due to missing queues or other channel-level errors)
+
 ## 0.22.1 (2025-09-11)
 
 - Add optional `routing_key_match` parameter to `#published_messages` in `Ears::Testing::TestHelper`
