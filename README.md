@@ -652,6 +652,55 @@ end
 - `last_published_message(exchange_name = nil)` - Get the most recent message
 - `clear_published_messages` - Clear captured messages during a test
 
+### RSpec matchers
+
+For more expressive specs, Ears also provides RSpec matchers in
+`Ears::Testing::Matchers.`
+
+```ruby
+require 'ears/testing'
+require 'ears/testing/matchers'
+
+RSpec.describe UserService do
+  include Ears::Testing::TestHelper
+  include Ears::Testing::Matchers
+
+  before { mock_ears('events') }
+  after { ears_reset! }
+
+  it 'publishes a user.created event' do
+    service = UserService.new
+    service.create_user(name: 'John')
+
+    expect(
+      routing_key: 'user.created',
+      data: {
+        name: 'John',
+      },
+    ).to have_been_published
+  end
+
+  it 'supports matching message options' do
+    publisher = Ears::Publisher.new('events', :topic)
+    publisher.publish({ foo: 'bar' }, routing_key: 'test.key', app_id: 'my-app')
+
+    expect(
+      routing_key: 'test.key',
+      options: {
+        app_id: 'my-app',
+      },
+    ).to have_been_published
+  end
+
+  it 'can be scoped to a specific exchange' do
+    expect(
+      routing_key: 'user.created',
+      exchange_name: 'events',
+    ).to have_been_published
+  end
+end
+```
+
 ### Message Properties
 
 Each captured message has the following properties:
