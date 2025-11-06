@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.23.0 (2025-11-06)
+
+- Add `have_been_published` rspec matcher
+
 ## 0.22.2 (2025-09-19)
 
 ### Fixed
