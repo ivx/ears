@@ -652,6 +652,17 @@ end
 - `last_published_message(exchange_name = nil)` - Get the most recent message
 - `clear_published_messages` - Clear captured messages during a test
 
+### Message Properties
+
+Each captured message has the following properties:
+
+- `exchange_name` - Name of the exchange
+- `routing_key` - Message routing key
+- `data` - The message payload
+- `options` - Publishing options (headers, persistent, etc.)
+- `timestamp` - When the message was captured
+- `thread_id` - Thread that published the message
+
 ### Custom RSpec Matcher: `have_been_published`
 
 To make tests more expressive, Ears provides a custom RSpec matcher that allows you to easily assert that a specific message was published to a mocked exchange.
@@ -680,6 +691,20 @@ RSpec.describe MyPublisher do
         user_id: 1,
       },
     ).to have_been_published
+  end
+
+  # also works with negative assertions
+  it 'does not publishes a user.deleted message' do
+    publisher = Ears::Publisher.new('events', :topic)
+    publisher.publish({ user_id: 1 }, routing_key: 'user.created')
+
+    expect(
+      exchange_name: 'events',
+      routing_key: 'user.deleted',
+      data: {
+        user_id: 1,
+      },
+    ).not_to have_been_published
   end
 end
 ```
@@ -711,24 +736,7 @@ expect(
     persistent: true,
   },
 ).to have_been_published
-
-# also works with negative assertions
-expect(
-  exchange_name: 'events',
-  routing_key: 'user.deleted',
-).not_to have_been_published
 ```
-
-### Message Properties
-
-Each captured message has the following properties:
-
-- `exchange_name` - Name of the exchange
-- `routing_key` - Message routing key
-- `data` - The message payload
-- `options` - Publishing options (headers, persistent, etc.)
-- `timestamp` - When the message was captured
-- `thread_id` - Thread that published the message
 
 ### Error Handling
 
