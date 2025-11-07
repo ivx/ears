@@ -31,12 +31,11 @@ module Ears
           data = expected[:data]
           options = expected[:options]
 
-          (!routing_key || published.routing_key == routing_key) &&
-            (!data || published.data == data) &&
-            (
-              !options ||
-                options.all? { |key, value| published.options[key] == value }
-            )
+          [
+            (routing_key.nil? || published.routing_key == routing_key),
+            (data.nil? || published.data == data),
+            (options.nil? || options.all? { |k, v| published.options[k] == v }),
+          ].all?
         end
       end
     end
