@@ -694,7 +694,7 @@ RSpec.describe MyPublisher do
   end
 
   # also works with negative assertions
-  it 'does not publishes a user.deleted message' do
+  it 'does not publish a user.deleted message' do
     publisher = Ears::Publisher.new('events', :topic)
     publisher.publish({ user_id: 1 }, routing_key: 'user.created')
 
