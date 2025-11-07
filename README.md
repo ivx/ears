@@ -724,6 +724,8 @@ If a key is omitted, it will not be checked — allowing partial matches (for ex
 
 #### Example: Matching with Options
 
+> **Note:** When matching `:options`, you only need to specify the options you want to verify — the matcher will ignore any additional options present in the published message.
+
 ```ruby
 expect(
   exchange_name: 'events',
