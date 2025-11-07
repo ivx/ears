@@ -1,8 +1,9 @@
 module Ears
   module Testing
     module Matchers
-      RSpec::Matchers.define :have_been_published do
-        include TestHelper
+      RSpec::Matchers.define :have_been_published do # rubocop:disable Metrics/BlockLength
+        include Ears::Testing::TestHelper
+
         match do |expected|
           exchange_name = expected[:exchange_name]
           messages = published_messages(exchange_name)
@@ -17,7 +18,12 @@ module Ears
         end
 
         failure_message_when_negated do |expected|
-          "expected no message with #{expected.inspect} to have been published, but it was."
+          matching =
+            published_messages(expected[:exchange_name]).select do |m|
+              matches_message?(m, expected)
+            end
+          "expected no message with #{expected.inspect} to have been published, but found:\n" \
+            "#{matching.map(&:inspect).join("\n")}"
         end
 
         def matches_message?(published, expected)
