@@ -663,6 +663,83 @@ Each captured message has the following properties:
 - `timestamp` - When the message was captured
 - `thread_id` - Thread that published the message
 
+### Custom RSpec Matcher: `have_been_published`
+
+To make tests more expressive, Ears provides a custom RSpec matcher that allows you to easily assert that a specific message was published to a mocked exchange.
+
+#### Usage
+
+Include the matcher by requiring `ears/testing` in your RSpec tests and including the helper module:
+
+```ruby
+require 'ears/testing'
+
+RSpec.describe MyPublisher do
+  include Ears::Testing::TestHelper
+
+  before { mock_ears('events') }
+  after { ears_reset! }
+
+  it 'publishes a user.created message' do
+    publisher = Ears::Publisher.new('events', :topic)
+    publisher.publish({ user_id: 1 }, routing_key: 'user.created')
+
+    expect(
+      exchange_name: 'events',
+      routing_key: 'user.created',
+      data: {
+        user_id: 1,
+      },
+    ).to have_been_published
+  end
+
+  # also works with negative assertions
+  it 'does not publish a user.deleted message' do
+    publisher = Ears::Publisher.new('events', :topic)
+    publisher.publish({ user_id: 1 }, routing_key: 'user.created')
+
+    expect(
+      exchange_name: 'events',
+      routing_key: 'user.deleted',
+      data: {
+        user_id: 1,
+      },
+    ).not_to have_been_published
+  end
+end
+```
+
+#### Supported Keys
+
+You can match on any or all of the following attributes:
+
+| Key              | Description                                    | Example                                             |
+| ---------------- | ---------------------------------------------- | --------------------------------------------------- |
+| `:exchange_name` | The exchange where the message was published   | `'events'`                                          |
+| `:routing_key`   | The routing key used for the message           | `'user.created'`                                    |
+| `:data`          | The message payload (exact match)              | `{ user_id: 1 }`                                    |
+| `:options`       | Message options such as headers or persistence | `{ persistent: true, headers: { version: '1.0' } }` |
+
+If a key is omitted, it will not be checked — allowing partial matches (for example, matching only on `exchange_name` and `routing_key`).
+
+#### Example: Matching with Options
+
+> **Note:** When matching `:options`, you only need to specify the options you want to verify — the matcher will ignore any additional options present in the published message.
+
+```ruby
+expect(
+  exchange_name: 'events',
+  routing_key: 'user.created',
+  data: {
+    id: 42,
+    name: 'Alice',
+  },
+  options: {
+    persistent: true,
+  },
+).to have_been_published
+```
+
 ### Error Handling
 
 By default, publishing to unmocked exchanges raises an error:
