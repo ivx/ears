@@ -672,10 +672,10 @@ To make tests more expressive, Ears provides a custom RSpec matcher that allows 
 Include the matcher by requiring `ears/testing` in your RSpec tests and including the helper module:
 
 ```ruby
-require 'ears/testing'
+require 'ears/testing/matchers'
 
 RSpec.describe MyPublisher do
-  include Ears::Testing::TestHelper
+  include Ears::Testing::Matchers
 
   before { mock_ears('events') }
   after { ears_reset! }
