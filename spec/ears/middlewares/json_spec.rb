@@ -6,7 +6,7 @@ RSpec.describe Ears::Middlewares::JSON do
     let(:middleware) { Ears::Middlewares::JSON.new(options) }
     let(:delivery_info) { instance_double(Bunny::DeliveryInfo) }
     let(:metadata) { instance_double(Bunny::MessageProperties) }
-    let(:payload) { MultiJson.dump({ my: 'payload' }) }
+    let(:payload) { JSON.generate({ my: 'payload' }) }
     let(:error_handler) { Proc.new { :error_handler_result } }
     let(:options) { { on_error: error_handler } }
 
@@ -85,7 +85,7 @@ RSpec.describe Ears::Middlewares::JSON do
 
       it 'calls the error handler with the error' do
         expect(error_handler).to receive(:call).with(
-          instance_of(MultiJson::ParseError),
+          instance_of(JSON::ParserError),
         )
 
         middleware.call(delivery_info, metadata, payload, Proc.new { :success })

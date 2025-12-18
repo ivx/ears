@@ -4,7 +4,7 @@ PATH
     ears (0.23.0)
       bunny (>= 2.22.0)
       connection_pool (~> 2.4)
-      multi_json
+      json (>= 2.9.0)
 
 GEM
   remote: https://rubygems.org/
@@ -20,7 +20,6 @@ GEM
     json (2.13.2)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
-    multi_json (1.17.0)
     parallel (1.27.0)
     parser (3.3.9.0)
       ast (~> 2.4.1)
@@ -84,13 +83,9 @@ GEM
     yard (0.9.37)
 
 PLATFORMS
-  arm64-darwin-20
-  arm64-darwin-21
-  arm64-darwin-22
+  arm64-darwin
   ruby
-  x86_64-darwin-20
-  x86_64-darwin-21
-  x86_64-darwin-22
+  x86_64-darwin
   x86_64-linux
 
 DEPENDENCIES
@@ -115,7 +110,6 @@ CHECKSUMS
   json (2.13.2) sha256=02e1f118d434c6b230a64ffa5c8dee07e3ec96244335c392eaed39e1199dbb68
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
-  multi_json (1.17.0) sha256=76581f6c96aebf2e85f8a8b9854829e0988f335e8671cd1a56a1036eb75e4a1b
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.9.0) sha256=94d6929354b1a6e3e1f89d79d4d302cc8f5aa814431a6c9c7e0623335d7687f2
   prettier_print (1.2.1) sha256=a72838b5f23facff21f90a5423cdcdda19e4271092b41f4ea7f50b83929e6ff9

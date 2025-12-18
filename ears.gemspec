@@ -34,5 +34,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'bunny', '>= 2.22.0'
   spec.add_dependency 'connection_pool', '~> 2.4'
-  spec.add_dependency 'multi_json'
+  spec.add_dependency 'json', '>= 2.9.0'
 end

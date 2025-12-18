@@ -1,5 +1,5 @@
+require 'json'
 require 'ears/middleware'
-require 'multi_json'
 
 module Ears
   module Middlewares
@@ -17,7 +17,7 @@ module Ears
       def call(delivery_info, metadata, payload, app)
         begin
           parsed_payload =
-            MultiJson.load(payload, symbolize_keys: symbolize_keys)
+            ::JSON.parse(payload, symbolize_names: symbolize_keys)
         rescue => e
           return on_error.call(e)
         end
