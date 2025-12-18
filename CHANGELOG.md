@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.24.0 (2025-12-18)
+
+- Replace `MultiJson` in `Ears::Middlewares::JSON` with `JSON`
+
 ## 0.23.0 (2025-11-06)
 
 - Add `have_been_published` rspec matcher
