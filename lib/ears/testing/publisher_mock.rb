@@ -53,6 +53,7 @@ module Ears
 
       def setup_register_exchange(channel)
         allow(channel).to receive(:register_exchange)
+        allow(channel).to receive(:record_exchange)
       end
 
       def setup_basic_publish(channel)
