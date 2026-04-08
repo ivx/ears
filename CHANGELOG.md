@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.0 (2026-04-08)
+
+- Drop support for bunny versions below 3.0.0
+- Fix publisher mock to stub `record_exchange` on `Bunny::Channel`
+
 ## 0.24.0 (2025-12-18)
 
 - Replace `MultiJson` in `Ears::Middlewares::JSON` with `JSON`
