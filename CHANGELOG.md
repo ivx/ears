@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.26.0 (2026-06-01)
+
+- Upgrade `connection_pool` dependency to `~> 3.0`
+
 ## 0.25.0 (2026-04-08)
 
 - Drop support for bunny versions below 3.0.0

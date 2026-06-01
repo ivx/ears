@@ -33,6 +33,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'bunny', '>= 3.0.0'
-  spec.add_dependency 'connection_pool', '~> 2.4'
+  spec.add_dependency 'connection_pool', '~> 3.0'
   spec.add_dependency 'json', '>= 2.9.0'
 end
