@@ -3,7 +3,6 @@ source 'https://rubygems.org'
 gemspec
 
 group :test do
-  gem 'parallel', '< 2.0' # 2.x drops Ruby 3.2 support (gemspec still requires >= 3.2.9)
   gem 'rake'
   gem 'rspec'
   gem 'rubocop', require: false
