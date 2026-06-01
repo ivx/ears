@@ -38,6 +38,7 @@ lib/
   ears.rb                         # Top-level module: configure, connection, channel, setup, run!
   ears/
     configuration.rb              # Ears::Configuration — all tunable constants
+    errors.rb                     # Custom error classes (required by configuration.rb)
     consumer.rb                   # Abstract base class; subclass and override #work
     consumer_wrapper.rb           # Wraps a Consumer for Bunny delivery callbacks
     setup.rb                      # Ears::Setup — DSL for exchange/queue/consumer wiring
