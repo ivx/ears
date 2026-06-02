@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.description = 'A gem for building RabbitMQ consumers.'
   spec.homepage = 'https://github.com/ivx/ears'
   spec.license = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 3.2.9')
+  spec.required_ruby_version = Gem::Requirement.new('>= 3.3.0')
 
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
 
@@ -33,6 +33,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'bunny', '>= 3.0.0'
-  spec.add_dependency 'connection_pool', '~> 2.4'
+  spec.add_dependency 'connection_pool', '~> 3.0'
   spec.add_dependency 'json', '>= 2.9.0'
 end

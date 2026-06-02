@@ -1,10 +1,20 @@
-# Specify a different separator for branch names
-
 version: 2
-updates:
-  - package-ecosystem: 'github-actions'
-    directory: '/'
+
+multi-ecosystem-groups:
+  security:
     schedule:
-      interval: 'weekly'
+      interval: 'daily'
+    open-pull-requests-limit: 0 # disables version-update PRs; security PRs unaffected
     pull-request-branch-name:
       separator: '-'
+
+updates:
+  - package-ecosystem: 'bundler'
+    directory: '/'
+    patterns: ['*']
+    multi-ecosystem-group: 'security'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    patterns: ['*']
+    multi-ecosystem-group: 'security'
