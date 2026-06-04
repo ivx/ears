@@ -1,20 +1,32 @@
 version: 2
 
-multi-ecosystem-groups:
-  security:
-    schedule:
-      interval: 'daily'
-    open-pull-requests-limit: 0 # disables version-update PRs; security PRs unaffected
-    pull-request-branch-name:
-      separator: '-'
-
 updates:
   - package-ecosystem: 'bundler'
     directory: '/'
-    patterns: ['*']
-    multi-ecosystem-group: 'security'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns: ['*']
+
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns: ['*']
 
   - package-ecosystem: 'github-actions'
     directory: '/'
-    patterns: ['*']
-    multi-ecosystem-group: 'security'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns: ['*']
