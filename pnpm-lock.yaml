@@ -1,0 +1,48 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      '@invisionag/prettier-config':
+        specifier: ^2.1.3
+        version: 2.1.3(prettier@3.8.3)
+      '@prettier/plugin-ruby':
+        specifier: ^4.0.4
+        version: 4.0.4(prettier@3.8.3)
+      prettier:
+        specifier: ^3.8.3
+        version: 3.8.3
+
+packages:
+
+  '@invisionag/prettier-config@2.1.3':
+    resolution: {integrity: sha512-/BRe7iCWtsn43hhYrD2ANla2Qf332EusDjcuuB9xOK/z3lEghp59pkuxNFIvlQ/Y9AFMaT1zOFhvxzYax+fj3g==}
+    peerDependencies:
+      prettier: '>=2.0.0'
+
+  '@prettier/plugin-ruby@4.0.4':
+    resolution: {integrity: sha512-lCpvfS/dQU5WrwN3AQ5vR8qrvj2h5gE41X08NNzAAXvHdM4zwwGRcP2sHSxfu6n6No+ljWCVx95NvJPFTTjCTg==}
+    peerDependencies:
+      prettier: ^3.0.0
+
+  prettier@3.8.3:
+    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
+    engines: {node: '>=14'}
+    hasBin: true
+
+snapshots:
+
+  '@invisionag/prettier-config@2.1.3(prettier@3.8.3)':
+    dependencies:
+      prettier: 3.8.3
+
+  '@prettier/plugin-ruby@4.0.4(prettier@3.8.3)':
+    dependencies:
+      prettier: 3.8.3
+
+  prettier@3.8.3: {}

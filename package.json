@@ -1,10 +1,11 @@
 {
   "name": "ears",
   "private": true,
+  "packageManager": "pnpm@11.5.1",
   "scripts": {
-    "prettify": "prettier \"**/*.{ru,rb,yml,yaml,md,gemspec,json}\" --ignore-path=\".gitignore\"",
-    "lint": "npm run prettify -- --check",
-    "format": "npm run prettify -- --write"
+    "prettify": "prettier \"**/*.{ru,rb,yml,yaml,md,gemspec,json}\"",
+    "lint": "pnpm run prettify --check",
+    "format": "pnpm run prettify --write"
   },
   "devDependencies": {
     "@invisionag/prettier-config": "^2.1.3",
