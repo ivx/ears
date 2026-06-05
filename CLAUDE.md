@@ -9,20 +9,22 @@ Ruby gem for building RabbitMQ consumers using Bunny.
 - **connection_pool** ~> 3.0 — thread-safe channel pools for publishers
 - **json** >= 2.9.0 — JSON serialization in middleware
 - Dev tools: RSpec, RuboCop (rubocop-rspec, rubocop-rake), SimpleCov, YARD, Prettier (via Node)
+- **Node tooling**: pnpm v11+ (pinned in `package.json#packageManager`). The JS toolchain is dev-only (Prettier on Ruby files); nothing JS ships at runtime.
 
 ## Common Commands
 
 ```bash
 # Install deps
 bundle install
-npm install
+pnpm install --frozen-lockfile
 
 # Tests
 bundle exec rspec
 
 # Lint / format
 bundle exec rubocop
-npm run lint          # Prettier on Ruby files
+pnpm run lint         # Prettier on Ruby files
+pnpm run format       # Prettier --write
 
 # Autofix rubocop
 bundle exec rubocop -A
