@@ -722,6 +722,16 @@ You can match on any or all of the following attributes:
 
 If a key is omitted, it will not be checked — allowing partial matches (for example, matching only on `exchange_name` and `routing_key`).
 
+#### RuboCop
+
+The matcher takes the search criteria as its subject, so `expect(routing_key: '…')` is a hash literal. As of `rubocop-rspec` 3.10.0 this trips `RSpec/ExpectActual`. Exclude the specs that use the matcher:
+
+```yaml
+RSpec/ExpectActual:
+  Exclude:
+    - 'spec/**/*_publisher_spec.rb'
+```
+
 #### Example: Matching with Options
 
 > **Note:** When matching `:options`, you only need to specify the options you want to verify — the matcher will ignore any additional options present in the published message.
