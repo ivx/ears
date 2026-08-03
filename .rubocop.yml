@@ -93,3 +93,9 @@ RSpec/MultipleMemoizedHelpers:
 
 RSpec/StubbedMock:
   Enabled: false
+
+# `have_been_published` takes the search criteria as its subject rather than a
+# value under test, so `expect(routing_key: '…')` is the matcher's intended API.
+RSpec/ExpectActual:
+  Exclude:
+    - 'spec/ears/testing/matchers_spec.rb'
