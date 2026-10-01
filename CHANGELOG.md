@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.1 (2026-10-01)
+
+### Fixed
+
+- Resetting a publisher channel pool while a closed channel is checked out no longer raises `Bunny::ChannelAlreadyClosed` on checkin. Previously this masked the original error (e.g. `PublishConfirmationTimeout`) and caused it to be retried as a connection error, which could duplicate a message.
+
 ## 0.26.0 (2026-06-01)
 
 - Upgrade `connection_pool` dependency to `~> 3.0`

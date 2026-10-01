@@ -34,8 +34,8 @@ module Ears
         @confirms_pool = nil
         @creator_pid = nil
 
-        std_pool&.shutdown(&:close)
-        cnf_pool&.shutdown(&:close)
+        std_pool&.shutdown { |channel| close_channel(channel) }
+        cnf_pool&.shutdown { |channel| close_channel(channel) }
         nil
       end
 
@@ -47,7 +47,7 @@ module Ears
         cnf_pool = @confirms_pool
         @confirms_pool = nil
 
-        cnf_pool&.shutdown(&:close)
+        cnf_pool&.shutdown { |channel| close_channel(channel) }
         nil
       end
 
@@ -110,6 +110,12 @@ module Ears
 
         raise PublisherRetryHandler::PublishToStaleChannelError,
               'Channel is closed'
+      end
+
+      def close_channel(channel)
+        channel.close
+      rescue Bunny::ChannelAlreadyClosed
+        nil
       end
 
       def cleanup_closed_channel(channel)
