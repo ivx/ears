@@ -84,6 +84,42 @@ RSpec.describe Ears::PublisherChannelPool do
       end
     end
 
+    context 'when the pool is reset while its channel is checked out and closed' do
+      let(:mock_channel) do
+        instance_double(Bunny::Channel, confirm_select: nil)
+      end
+
+      before do
+        allow(mock_channel).to receive(:open?).and_return(true, false)
+        allow(mock_channel).to receive(:close).and_raise(
+          Bunny::ChannelAlreadyClosed.new(
+            'cannot use a closed channel!',
+            mock_channel,
+          ),
+        )
+      end
+
+      it 'returns the result of the block' do
+        result =
+          described_class.with_channel(confirms: true) do
+            described_class.reset_confirms_pool!
+            :published
+          end
+
+        expect(result).to eq(:published)
+      end
+
+      it 'raises the error from the block' do
+        expect {
+          described_class.with_channel(confirms: true) do
+            described_class.reset_confirms_pool!
+            raise Ears::PublishConfirmationTimeout,
+                  'Confirmation timeout after 5.0s'
+          end
+        }.to raise_error(Ears::PublishConfirmationTimeout)
+      end
+    end
+
     context 'with confirms: false (default)' do
       it 'yields a channel from the standard pool' do
         allow(ConnectionPool).to receive(:new).and_return(mock_standard_pool)
