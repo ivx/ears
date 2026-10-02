@@ -4,7 +4,7 @@ module Ears
   # Handles publisher confirmations for RabbitMQ messages.
   #
   # This class encapsulates the logic for publishing messages with confirmations,
-  # including timeout handling, channel cleanup, and pool coordination.
+  # including timeout handling and channel cleanup.
   class PublisherConfirmationHandler
     # Creates a new confirmation handler.
     #
@@ -71,8 +71,6 @@ module Ears
       rescue StandardError => e
         warn("Failed closing channel on failed confirmation: #{e.message}")
       end
-
-      PublisherChannelPool.reset_confirms_pool!
 
       if channel.nacked_set&.any?
         warn('Publisher confirmation failed: message was nacked by broker.')

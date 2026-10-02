@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ears (0.26.1)
+    ears (0.27.0)
       bunny (>= 3.0.0)
       connection_pool (~> 3.0)
       json (>= 2.9.0)
@@ -102,7 +102,7 @@ CHECKSUMS
   bunny (3.3.0) sha256=85ef5562ec2b24f542e8fad69c4302d30d966fb79ff803dc9d0c398a4054672a
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
-  ears (0.26.1)
+  ears (0.27.0)
   json (2.21.2) sha256=1f1d3b7cf2b3ba1a69beca0bb6db13d5438b80bff3cd54cdaaa620b9b07c1c6a
   language_server-protocol (3.17.0.6) sha256=5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87

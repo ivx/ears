@@ -18,8 +18,14 @@ module Ears
 
         pool = confirms ? confirms_pool : standard_pool
         pool.with do |channel|
-          validate_channel_health!(channel, confirms)
+          unless channel.open?
+            raise PublisherRetryHandler::PublishToStaleChannelError,
+                  'Channel is closed'
+          end
+
           block.call(channel)
+        ensure
+          pool.discard_current_connection unless channel.open?
         end
       end
 
@@ -102,32 +108,10 @@ module Ears
         @init_mutex ||= Mutex.new
       end
 
-      def validate_channel_health!(channel, confirms)
-        return if channel.open?
-
-        cleanup_closed_channel(channel)
-        reset_appropriate_pool(confirms)
-
-        raise PublisherRetryHandler::PublishToStaleChannelError,
-              'Channel is closed'
-      end
-
       def close_channel(channel)
         channel.close
       rescue Bunny::ChannelAlreadyClosed
         nil
-      end
-
-      def cleanup_closed_channel(channel)
-        return unless channel.respond_to?(:close)
-
-        channel.close
-      rescue StandardError
-        # Channel is already closed, ignore cleanup errors
-      end
-
-      def reset_appropriate_pool(confirms)
-        confirms ? reset_confirms_pool! : reset!
       end
     end
   end
