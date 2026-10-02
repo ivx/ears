@@ -1,5 +1,4 @@
 require 'ears/publisher_confirmation_handler'
-require 'ears/publisher_channel_pool'
 
 RSpec.describe Ears::PublisherConfirmationHandler do
   let(:config) do
@@ -110,22 +109,6 @@ RSpec.describe Ears::PublisherConfirmationHandler do
 
         expect(mock_channel).not_to have_received(:close)
       end
-
-      it 'does not reset the confirms pool' do
-        allow(Ears::PublisherChannelPool).to receive(:reset_confirms_pool!)
-
-        handler.publish_with_confirmation(
-          channel: mock_channel,
-          exchange: mock_exchange,
-          data: data,
-          routing_key: routing_key,
-          options: options,
-        )
-
-        expect(Ears::PublisherChannelPool).not_to have_received(
-          :reset_confirms_pool!,
-        )
-      end
     end
 
     context 'when confirmation times out' do
@@ -140,7 +123,6 @@ RSpec.describe Ears::PublisherConfirmationHandler do
           open?: true,
           nacked_set: Set.new,
         )
-        allow(Ears::PublisherChannelPool).to receive(:reset_confirms_pool!)
       end
 
       it 'raises PublishConfirmationTimeout error' do
@@ -172,22 +154,6 @@ RSpec.describe Ears::PublisherConfirmationHandler do
         expect(mock_channel).to have_received(:close).twice
       end
 
-      it 'resets the confirms pool' do
-        expect {
-          handler.publish_with_confirmation(
-            channel: mock_channel,
-            exchange: mock_exchange,
-            data: data,
-            routing_key: routing_key,
-            options: options,
-          )
-        }.to raise_error(Ears::PublishConfirmationTimeout)
-
-        expect(Ears::PublisherChannelPool).to have_received(
-          :reset_confirms_pool!,
-        )
-      end
-
       it 'logs timeout warning' do
         expect {
           handler.publish_with_confirmation(
@@ -213,7 +179,6 @@ RSpec.describe Ears::PublisherConfirmationHandler do
           open?: true,
         )
         allow(mock_channel).to receive(:close)
-        allow(Ears::PublisherChannelPool).to receive(:reset_confirms_pool!)
       end
 
       it 'raises PublishNacked error' do
@@ -240,22 +205,6 @@ RSpec.describe Ears::PublisherConfirmationHandler do
         }.to raise_error(Ears::PublishNacked)
 
         expect(mock_channel).to have_received(:close)
-      end
-
-      it 'resets the confirms pool' do
-        expect {
-          handler.publish_with_confirmation(
-            channel: mock_channel,
-            exchange: mock_exchange,
-            data: data,
-            routing_key: routing_key,
-            options: options,
-          )
-        }.to raise_error(Ears::PublishNacked)
-
-        expect(Ears::PublisherChannelPool).to have_received(
-          :reset_confirms_pool!,
-        )
       end
 
       it 'logs nack warning' do
@@ -290,7 +239,6 @@ RSpec.describe Ears::PublisherConfirmationHandler do
           open?: true,
           nacked_set: Set.new,
         )
-        allow(Ears::PublisherChannelPool).to receive(:reset_confirms_pool!)
       end
 
       it 'logs channel close failure warning' do
@@ -322,7 +270,6 @@ RSpec.describe Ears::PublisherConfirmationHandler do
           open?: true,
           nacked_set: Set.new,
         )
-        allow(Ears::PublisherChannelPool).to receive(:reset_confirms_pool!)
       end
 
       it 'logs cleanup warning' do

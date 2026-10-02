@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.0 (2026-10-02)
+
+### Changed
+
+- A publisher channel that is closed when it is returned to the pool is now discarded instead of resetting the whole pool. A failed publish confirmation no longer closes the channels other threads are publishing on.
+
 ## 0.26.1 (2026-10-01)
 
 ### Fixed
