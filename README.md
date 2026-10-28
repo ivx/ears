@@ -509,6 +509,8 @@ end
 
 This will automatically route messages to `my_queue.error` after they have been re-tried three times. This prevents you from infinitely retrying a faulty message.
 
+The message in the error queue is persistent and keeps the properties and headers of the original message, except `user_id` and the `x-death` header. Register `MaxRetries` before any middleware that changes the body (for example `JSON`), because otherwise `MaxRetries` gets the parsed body, not the original text.
+
 ### Stopping any running consumers
 
 When you are running Ears in a non-blocking way (e.g. in a Thread), it might be cumbersome to remove the running consumers without restarting the whole app.

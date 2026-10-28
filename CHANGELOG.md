@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.28.0 (2026-10-28)
+
+### Fixed
+
+- `Ears::Middlewares::MaxRetries` now publishes the message to the error queue as persistent. Previously the message was transient and a broker restart dropped it from a classic queue.
+
+### Changed
+
+- `Ears::Middlewares::MaxRetries` now copies the properties of the original message (headers, `content_type`, `message_id`, `timestamp` and so on) to the error-queue message. It does not copy `user_id` and removes the `x-death` header, so a message that you move back to the main queue is processed again.
+
 ## 0.27.0 (2026-10-02)
 
 ### Changed
